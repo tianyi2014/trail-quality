@@ -1,0 +1,19 @@
+name: Restore index.html
+
+on:
+  workflow_dispatch:
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore new index.html from earlier commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout 9203ffa -- index.html
+          git commit -m "Restore new index.html"
+          git push
