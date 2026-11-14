@@ -1,0 +1,20 @@
+name: Rename uploaded file to index.html
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rename:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rename file to index.html
+        run: |
+          git config user.name "tianyi2014"
+          git config user.email "tianyi2014@users.noreply.github.com"
+          git mv bei-da-hu-xue-dao-zhi-liang-hu-dong-di-tu.html index.html
+          git commit -m "Fix: date chips and segment buttons clickable"
+          git push
