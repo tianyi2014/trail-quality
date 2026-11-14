@@ -1,0 +1,1368 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>北大湖雪道质量互动地图</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+<style>
+:root{
+--bg:#edf1f4; --surface:#ffffff; --surface2:#f4f7f9; --ink:#17242f; --ink2:#54636f; --ink3:#8494a1;
+--line:#d7dfe5; --line2:#c3ced6;
+--blue:#1663b8; --blue-soft:#e3eef9;
+--teal:#0d7a6f; --teal-soft:#e0f2ee;
+--orange:#d95d0e; --orange-soft:#fdeee1;
+--red:#c62f2f; --red-soft:#fbe7e7;
+--amber:#b97e0a; --amber-soft:#faf0d7;
+--heat0:#f4f7f9; --heat1:#fdf3e0; --heat2:#fbd9a8; --heat3:#f6a97c;
+--shadow:0 1px 3px rgba(23,36,47,.08),0 4px 14px rgba(23,36,47,.05);
+--radius:14px;
+}
+@media (prefers-color-scheme: dark){
+:root{
+--bg:#0e151b; --surface:#18222b; --surface2:#1f2b36; --ink:#e8eff4; --ink2:#a9bac6; --ink3:#748796;
+--line:#2b3a46; --line2:#3a4c5b;
+--blue:#5ea3e8; --blue-soft:#1d3249;
+--teal:#3ec2b2; --teal-soft:#173b37;
+--orange:#f08b45; --orange-soft:#422b18;
+--red:#f07676; --red-soft:#472222;
+--amber:#e5b84e; --amber-soft:#40351a;
+--heat0:#1f2b36; --heat1:#3d321e; --heat2:#5a3d1e; --heat3:#7a4423;
+--shadow:0 1px 3px rgba(0,0,0,.35);
+}
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;font-size:15px;line-height:1.55}
+button,[role="button"],select,input,summary{min-height:2.25rem}
+button{font:inherit;cursor:pointer}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 16px 48px}
+h1{font-size:clamp(22px,3.4vw,30px);font-weight:900;margin:0;letter-spacing:.01em}
+h2{font-size:18px;font-weight:900;margin:0}
+h3{font-size:15px;font-weight:700;margin:0}
+.sub{color:var(--ink2);font-size:13.5px;margin-top:4px}
+.topbar{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;justify-content:space-between}
+.badges{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.open-badge{display:inline-flex;align-items:center;gap:7px;background:var(--teal-soft);color:var(--teal);font-weight:700;font-size:13px;padding:7px 12px;border-radius:999px;border:1px solid var(--teal)}
+.sync-badge{display:inline-flex;align-items:center;gap:7px;background:var(--surface);color:var(--ink2);font-weight:700;font-size:13px;padding:7px 12px;border-radius:999px;border:1px solid var(--line2)}
+.sync-badge .dot{background:var(--amber)}
+.sync-badge.ok{color:var(--teal);border-color:var(--teal)}
+.sync-badge.ok .dot{background:var(--teal)}
+.sync-badge.err{color:var(--red);border-color:var(--red)}
+.sync-badge.err .dot{background:var(--red)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--teal);flex:none}
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:16px 0 6px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow)}
+.kpi .num{font-size:26px;font-weight:900;line-height:1.1}
+.kpi .lab{font-size:12.5px;color:var(--ink2);margin-top:2px}
+.kpi.alert .num{color:var(--red)}
+.kpi.hot .num{color:var(--orange)}
+/* toolbar */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 12px}
+.toolbar .tlab{font-size:13px;color:var(--ink2);font-weight:700;margin-right:2px}
+.chip{border:1px solid var(--line2);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 14px;font-size:13.5px;font-weight:500;min-height:38px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:700}
+.legend{margin-left:auto;display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2);align-items:center}
+.legend i{width:14px;height:14px;border-radius:4px;display:inline-block;vertical-align:-2px;margin-right:4px;border:1px solid var(--line2)}
+/* layout */
+.grid{display:grid;grid-template-columns:7fr 5fr;gap:14px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+section{margin-top:26px}
+.sec-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.sec-head .hint{font-size:13px;color:var(--ink2)}
+/* trail map */
+.trails{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.trail-head{border-bottom:2px solid var(--line);padding-bottom:10px;margin-bottom:10px}
+.trail-name{font-size:19px;font-weight:900;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lvl{font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--blue-soft);color:var(--blue)}
+.lvl.green{background:var(--teal-soft);color:var(--teal)}
+.trail-meta{font-size:12.5px;color:var(--ink2);margin-top:3px}
+.endmark{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink3);font-weight:700;padding:2px 0 6px}
+.endmark::after{content:"";flex:1;border-top:1px dashed var(--line2)}
+.seg{position:relative;width:100%;text-align:left;border:1px solid var(--line2);background:var(--heat0);border-radius:10px;padding:10px 12px;margin:0 0 8px;display:block;color:var(--ink)}
+.seg:hover{border-color:var(--ink3)}
+.seg[aria-pressed="true"]{outline:2.5px solid var(--blue);outline-offset:1px}
+.seg .seg-top{display:flex;align-items:center;gap:8px}
+.seg .seg-name{font-weight:900;font-size:15.5px}
+.seg .seg-note{font-size:12px;color:var(--ink2);margin-top:2px;display:block}
+.cnt{margin-left:auto;flex:none;min-width:30px;height:30px;padding:0 8px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;background:var(--surface);border:1.5px solid var(--line2);color:var(--ink2)}
+.cnt.n1{background:var(--amber-soft);border-color:var(--amber);color:var(--amber)}
+.cnt.n2{background:var(--orange-soft);border-color:var(--orange);color:var(--orange)}
+.cnt.n3{background:var(--red-soft);border-color:var(--red);color:var(--red)}
+.seg.h1{background:var(--heat1)}.seg.h2{background:var(--heat2)}.seg.h3{background:var(--heat3)}
+.seg .tags{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:999px;background:var(--surface);border:1px solid var(--line2);color:var(--ink2)}
+.tag.repeat{background:var(--red);border-color:var(--red);color:#fff}
+.tag.openct{background:var(--red-soft);border-color:var(--red);color:var(--red)}
+.ribbon{width:100%;text-align:left;border:1.5px dashed var(--amber);background:var(--amber-soft);color:var(--ink);border-radius:10px;padding:9px 12px;margin:0 0 8px;font-size:13.5px}
+.ribbon b{font-weight:900}
+.ribbon[aria-pressed="true"]{outline:2.5px solid var(--blue);outline-offset:1px}
+.branch{font-size:12.5px;color:var(--ink2);margin:2px 0 6px;font-weight:700}
+/* detail */
+.detail-title{font-size:17px;font-weight:900}
+.detail-sub{font-size:13px;color:var(--ink2);margin:2px 0 10px}
+.oprow{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.oprow label{font-size:12.5px;font-weight:700;color:var(--ink2)}
+.oprow input{flex:1;min-width:140px;border:1px solid var(--line2);border-radius:9px;padding:7px 10px;background:var(--surface);color:var(--ink);font:inherit;font-size:14px;min-height:38px}
+.issue{border:1px solid var(--line);border-radius:10px;padding:12px 13px;margin-bottom:10px;background:var(--surface2)}
+.issue .i-top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--ink2)}
+.issue .desc{font-weight:700;font-size:15px;margin:5px 0 4px}
+.issue .act{font-size:13.5px}
+.issue .act b{color:var(--orange)}
+.issue .meta{font-size:12.5px;color:var(--ink2);margin-top:5px}
+.rect-rec{font-size:12.5px;color:var(--ink2);margin-top:6px;border-top:1px dashed var(--line);padding-top:6px}
+.rect-rec .rr-line{margin:2px 0}
+.rect-rec b{color:var(--ink)}
+.rr-ok{color:var(--teal);font-weight:900}
+.rr-no{color:var(--red);font-weight:900}
+.rect-form{margin-top:10px;border:1px solid var(--line2);border-radius:10px;background:var(--surface);padding:11px 12px}
+.rect-toggle{width:100%;display:flex;align-items:center;gap:8px;background:none;border:none;padding:2px 0;text-align:left;color:var(--ink);font-size:13.5px;font-weight:900;min-height:36px}
+.rect-toggle .rf-sub{font-size:12px;color:var(--red);font-weight:700}
+.rect-toggle .chev{margin-left:auto;flex:none;font-size:18px;font-weight:900;color:var(--ink3);transition:transform .15s;line-height:1}
+.rect-toggle[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.rect-body{margin-top:6px}
+.rect-body[hidden]{display:none}
+.rect-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.rect-grid .field.wide2{grid-column:span 2}
+.rect-grid textarea{width:100%;border:1px solid var(--line2);border-radius:9px;padding:8px 10px;background:var(--surface);color:var(--ink);font:inherit;font-size:14px;min-height:54px;resize:vertical}
+.rect-grid select,.rect-grid input{width:100%;border:1px solid var(--line2);border-radius:9px;padding:8px 10px;background:var(--surface);color:var(--ink);font:inherit;font-size:14px;min-height:42px}
+@media (max-width:560px){.rect-grid{grid-template-columns:1fr}.rect-grid .field.wide2{grid-column:span 1}}
+.stbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.stbtn{border:1px solid var(--blue);background:var(--blue-soft);color:var(--blue);border-radius:9px;padding:6px 12px;font-weight:700;font-size:13px;min-height:36px}
+.stbtn.primary{background:var(--blue);color:#fff}
+.stbtn.back{border-color:var(--line2);background:var(--surface);color:var(--ink2)}
+.stbtn:disabled{opacity:.5;cursor:wait}
+.pill{font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:999px;border:1px solid}
+.pill.type{color:var(--blue);border-color:var(--blue);background:var(--blue-soft)}
+.pill.closed{color:var(--teal);border-color:var(--teal);background:var(--teal-soft)}
+.pill.open{color:var(--red);border-color:var(--red);background:var(--red-soft)}
+.pill.wip{color:var(--amber);border-color:var(--amber);background:var(--amber-soft)}
+.pill.review{color:var(--blue);border-color:var(--blue);background:var(--blue-soft)}
+.pill.groom{color:var(--orange);border-color:var(--orange);background:var(--orange-soft)}
+.pill.lvl{color:var(--ink2);border-color:var(--line2);background:var(--surface)}
+.empty{border:1.5px dashed var(--line2);border-radius:10px;padding:18px 14px;text-align:center;color:var(--ink2);font-size:13.5px}
+.empty b{color:var(--teal)}
+/* tasks + focus */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.task{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
+.task:last-child{border-bottom:none;padding-bottom:2px}
+.task .no{flex:none;width:28px;height:28px;border-radius:50%;background:var(--orange);color:#fff;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:14px;margin-top:1px}
+.task .t-main{font-weight:700}
+.task .t-sub{font-size:13px;color:var(--ink2)}
+.focus-row{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);align-items:flex-start}
+.focus-row:last-child{border-bottom:none}
+.rank{flex:none;width:28px;height:28px;border-radius:8px;background:var(--ink);color:var(--bg);font-weight:900;display:flex;align-items:center;justify-content:center;font-size:14px}
+.focus-row .f-main{font-weight:700}
+.focus-row .f-sub{font-size:13px;color:var(--ink2)}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 14px;font-weight:700;font-size:13.5px;min-height:40px}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.5;cursor:wait}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+/* history bars */
+.hist{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.bar-row{display:grid;grid-template-columns:104px 1fr 30px;gap:9px;align-items:center;margin:9px 0;font-size:13px}
+.bar-row .bl{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{height:16px;background:var(--surface2);border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.bar-fill{height:100%;background:var(--blue);border-radius:4px;min-width:2px}
+.bar-fill.hot{background:var(--orange)}.bar-fill.red{background:var(--red)}
+.bar-row .bv{font-weight:900;text-align:right}
+.insight{background:var(--orange-soft);border:1px solid var(--orange);border-radius:var(--radius);padding:13px 15px;font-size:14px;margin-top:14px}
+.insight b{color:var(--orange)}
+/* table */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;min-width:920px;font-size:13.5px}
+th,td{padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{background:var(--surface2);font-size:12.5px;color:var(--ink2);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr[data-sel="true"] td{background:var(--blue-soft)}
+tbody tr{cursor:pointer}
+.cards{display:none}
+/* form */
+.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.field label{display:block;font-size:12.5px;font-weight:700;color:var(--ink2);margin-bottom:4px}
+.field select,.field input{width:100%;border:1px solid var(--line2);border-radius:9px;padding:8px 10px;background:var(--surface);color:var(--ink);font:inherit;font-size:14px;min-height:42px}
+.field.wide{grid-column:span 2}
+.form-note{font-size:12.5px;color:var(--ink2);margin-top:9px}
+/* quick report（简报） */
+.qr-name{max-width:340px;margin-bottom:12px}
+.qr-talk{width:100%;border:1.5px solid var(--line2);border-radius:10px;padding:11px 12px;background:var(--surface);color:var(--ink);font:inherit;font-size:15px;line-height:1.6;min-height:84px;resize:vertical}
+.qr-talk:focus{outline:2.5px solid var(--blue);outline-offset:1px}
+.qr-examples{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.qr-examples .ex-lab{font-size:12.5px;color:var(--ink2);font-weight:700}
+.ex-chip{border:1px dashed var(--line2);background:var(--surface2);color:var(--ink2);border-radius:999px;padding:5px 11px;font-size:12.5px;min-height:32px;text-align:left}
+.ex-chip:active{transform:translateY(1px)}
+.parse-box{border:1px solid var(--line);border-radius:10px;background:var(--surface2);padding:11px 13px;margin-top:12px}
+.parse-box[hidden]{display:none}
+.parse-box .p-lab{font-size:12.5px;font-weight:700;color:var(--ink2);margin-bottom:7px}
+.parse-chips{display:flex;gap:7px;flex-wrap:wrap}
+.mchip{font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line2);color:var(--ink)}
+.mchip b{color:var(--blue);font-weight:900}
+.mchip.warn{border-color:var(--amber);background:var(--amber-soft);color:var(--amber)}
+.new-badge{font-size:11px;font-weight:900;padding:1px 7px;border-radius:999px;background:var(--orange);color:#fff;vertical-align:2px;margin-left:5px}
+.parse-act{font-size:13.5px;margin-top:8px}
+.parse-act b{color:var(--orange)}
+.manual{margin-top:12px;border-top:1px dashed var(--line2);padding-top:10px}
+.manual summary{font-size:13px;font-weight:700;color:var(--ink2);cursor:pointer;padding:4px 0}
+.manual .form-grid{margin-top:10px}
+.reparse-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.reparse-row .hint{font-size:12.5px;color:var(--ink2)}
+/* workflow */
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 13px;box-shadow:var(--shadow)}
+.step .s-no{font-size:12px;font-weight:900;color:var(--blue)}
+.step .s-t{font-weight:900;margin:2px 0 3px}
+.step .s-d{font-size:12.5px;color:var(--ink2)}
+/* map image */
+.refmap{width:100%;border-radius:var(--radius);border:1px solid var(--line);display:block}
+figcaption{font-size:12.5px;color:var(--ink2);margin-top:8px}
+#homeView[hidden],#detailView[hidden]{display:none}
+.home-kpis{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0 6px}
+.home-kpi{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:2px;color:var(--ink)}
+.home-kpi .hk-num{font-size:32px;font-weight:900;line-height:1.1}
+.home-kpi .hk-lab{font-size:13px;color:var(--ink2)}
+.home-kpi .hk-go{font-size:12.5px;color:var(--blue);font-weight:700;margin-top:4px}
+.trail-pick{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0 12px}
+.trail-pick label{font-weight:900}
+.trail-pick select{border:1px solid var(--line2);border-radius:10px;padding:9px 12px;background:var(--surface);color:var(--ink);font:inherit;font-size:15px;font-weight:700;min-height:44px;min-width:200px}
+.trail-pick .hint{font-size:12.5px;color:var(--ink2)}
+.backbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:6px}
+.focus-details{margin-top:14px}
+.focus-details summary{cursor:pointer;font-weight:900;font-size:15px;color:var(--blue);padding:2px 0}
+.focus-details summary .hint{color:var(--ink2);font-size:12.5px;font-weight:500}
+@media (max-width:560px){.home-kpi .hk-num{font-size:26px}.trail-pick select{flex:1;min-width:0}}
+.trails{display:flex;flex-direction:column;gap:12px}
+.trail-acc{border:1px solid var(--line);border-radius:12px;padding:12px 13px;background:var(--surface2)}
+.trail-toggle{width:100%;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:none;border:none;padding:2px 0;text-align:left;color:var(--ink);min-height:40px}
+.trail-toggle .trail-name{font-size:18px}
+.trail-toggle .trail-counts{margin-left:auto;font-size:12.5px;color:var(--ink2)}
+.trail-toggle .trail-counts b{color:var(--red)}
+.trail-toggle .chev{font-size:20px;font-weight:900;color:var(--ink3);transition:transform .15s;line-height:1}
+.trail-toggle[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.trail-body{margin-top:10px}
+.trail-body[hidden]{display:none}
+.tdetail{margin-top:6px;border-top:1px dashed var(--line2);padding-top:12px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:14px;font-weight:700;opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:92vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+footer{margin-top:30px;font-size:12.5px;color:var(--ink3);border-top:1px solid var(--line);padding-top:14px}
+@media (max-width:900px){
+.kpis{grid-template-columns:repeat(2,1fr)}.kpi:last-child{grid-column:span 2}
+.grid,.two,.hist{grid-template-columns:1fr}
+.flow{grid-template-columns:1fr 1fr}
+.form-grid{grid-template-columns:1fr 1fr}.field.wide{grid-column:span 2}
+.legend{margin-left:0}
+.tbl-wrap{display:none}.cards{display:block}
+}
+@media (max-width:560px){
+.trails{grid-template-columns:1fr}
+.flow{grid-template-columns:1fr}
+.form-grid{grid-template-columns:1fr}.field.wide{grid-column:span 1}
+}
+.issue-card{border:1px solid var(--line);border-radius:10px;padding:12px 13px;margin-bottom:10px;background:var(--surface)}
+@media print{.toolbar,.btnrow,#addPanel,.toast,.stbtns,.oprow{display:none!important} body{background:#fff}}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div id="homeView">
+<div class="topbar">
+<div>
+<h1>雪道质量互动地图 · 星光 / 青云</h1>
+<p class="sub">北大湖滑雪度假区 · 2026—2027 雪季 · 巡逻上报实时共享</p>
+</div>
+<div class="badges">
+<span class="open-badge"><span class="dot"></span>当前开放：星光大道 · D14 青云大道</span>
+</div>
+</div>
+
+<div class="home-kpis">
+<button class="home-kpi" id="hkOpen" type="button"><span class="hk-num">2 条</span><span class="hk-lab">开放雪道 · 星光大道 / D14 青云大道</span><span class="hk-go">点开看详情 ›</span></button>
+<button class="home-kpi" id="hkToday" type="button"><span class="hk-num" id="hkTodayNum">—</span><span class="hk-lab" id="hkTodayLab">今日问题</span><span class="hk-go">点开看详情 ›</span></button>
+</div>
+
+<div class="toolbar" role="group" aria-label="按日期查看">
+<span class="tlab">看哪天</span>
+<span id="dateChipsHome" style="display:contents"></span>
+<div class="legend" aria-hidden="true">
+<span><i style="background:var(--heat0)"></i>无记录</span>
+<span><i style="background:var(--heat1)"></i>1 件</span>
+<span><i style="background:var(--heat2)"></i>2 件</span>
+<span><i style="background:var(--heat3)"></i>3 件+</span>
+</div>
+</div>
+
+<div class="panel" aria-label="雪道列表">
+<div class="trails" id="trails"></div>
+<p class="sub" style="margin-top:10px">每条雪道点标题展开 / 收起：段位按上段 / 中段 / 下段 / 入口划分，点段位看这段的问题记录和处理状态。位置为分段示意。</p>
+</div>
+<section id="addPanel">
+<div class="sec-head"><h2>巡查上报</h2><span class="hint">只填姓名，再用一句话说清问题——系统自动匹配雪道、段位、类型和处置建议，提交后所有人的地图上立刻出现</span></div>
+<div class="panel">
+<div class="field qr-name"><label for="fReporter">上报人姓名（唯一必填）</label>
+<input id="fReporter" type="text" placeholder="例：王雷" required aria-required="true" /></div>
+<div class="field"><label for="fTalk">一句话说清问题（发生了什么 · 在哪 · 建议怎么处理）</label>
+<textarea id="fTalk" class="qr-talk" rows="3" placeholder="例：青云大道中段石头崖子那儿有冰壳，挺滑的，建议今晚翻雪破壳再补一下"></textarea></div>
+<div class="qr-examples"><span class="ex-lab">照着说就行：</span>
+<button type="button" class="ex-chip" data-ex="星光大道上段有好几处冰疙瘩，新手容易摔，建议压雪车慢速反复碾压">星光大道上段有冰疙瘩…</button>
+<button type="button" class="ex-chip" data-ex="南坡弯道雪层太薄有点露底，建议补雪回填压实">南坡弯道雪层太薄…（新地点）</button>
+<button type="button" class="ex-chip" data-ex="云顶大道下段安全网破了一处，建议今天先围挡，明天补装">云顶大道下段安全网破了…（新雪道）</button>
+</div>
+<div class="parse-box" id="parseBox" aria-live="polite" hidden>
+<div class="parse-chips" id="parseChips"></div>
+<div class="parse-act" id="parseAct"></div>
+</div>
+<details class="manual" id="manualBox">
+<summary>识别得不对？手动调整（可不填，填了以这里为准）</summary>
+<div class="form-grid">
+<div class="field"><label for="fTrail">雪道</label>
+<select id="fTrail">
+<option value="xingguang">星光大道</option>
+<option value="qingyun">D14 青云大道</option>
+<option value="yin">青云咖啡厅引线</option>
+</select></div>
+<div class="field"><label for="fSeg">段位</label>
+<select id="fSeg">
+<option value="upper">上段</option>
+<option value="mid" selected>中段</option>
+<option value="lower">下段</option>
+<option value="entry">入口 / 索道站台</option>
+<option value="full">全线</option>
+</select></div>
+<div class="field"><label for="fType">问题类型</label>
+<select id="fType">
+<option>冰面/压雪不实</option>
+<option>积雪不足/露底</option>
+<option>雪包雪棱/雪面不平</option>
+<option>露土露石</option>
+<option>未压雪/雪道未按时开放</option>
+<option>安全网/防护垫缺失或破损</option>
+<option>标识标牌缺失或错误</option>
+<option>其他</option>
+</select></div>
+<div class="field"><label for="fLevel">严重等级</label>
+<select id="fLevel"><option>Ⅲ级</option><option>Ⅱ级</option><option>Ⅰ级</option></select></div>
+<div class="field"><label for="fGroom">需要夜间压雪处理</label>
+<select id="fGroom"><option value="yes">是 · 进今晚作业单</option><option value="no">否</option></select></div>
+<div class="field"><label for="fTeam">负责队伍</label>
+<select id="fTeam"><option>压雪队</option><option>造雪队</option><option>巡逻队</option><option>其他</option></select></div>
+<div class="field"><label for="fOwner">负责人（可空）</label>
+<input id="fOwner" type="text" placeholder="例：张斌" /></div>
+<div class="field"><label for="fTime">发现时间（自动填当前时间，可改）</label>
+<input id="fTime" type="time" /></div>
+<div class="field wide"><label for="fAction">建议处置（留空按识别结果自动生成）</label>
+<input id="fAction" type="text" placeholder="例：夜间翻雪破除冰壳并补雪" /></div>
+</div>
+<div class="reparse-row"><button class="btn" id="reparseBtn" type="button">重新按描述识别</button><span class="hint" id="manualHint">手动改过后将不再跟随描述自动变化，点此可恢复自动识别。</span></div>
+</details>
+<div class="btnrow">
+<button class="btn primary" id="addBtn">提交上报（同步到所有人）</button>
+<button class="btn" id="copyNew" disabled>复制最新一条为台账文字</button>
+</div>
+
+</div>
+</section>
+<div class="btnrow" style="margin-top:12px"><button class="btn primary" id="goDetail" type="button">看台账 · 今晚作业单 · 历史统计 ›</button></div>
+</div><!-- /homeView -->
+
+<div id="detailView" hidden>
+<div class="backbar">
+<button class="btn" id="backHome" type="button">‹ 返回主页</button>
+<span class="sync-badge" id="syncBadge"><span class="dot"></span><span id="syncText">正在连接共享数据…</span></span>
+</div>
+
+<div class="kpis" id="kpis"></div>
+
+<div class="toolbar" role="group" aria-label="按日期查看">
+<span class="tlab">看哪天</span>
+<span id="dateChips" style="display:contents"></span>
+<button class="chip" id="refreshBtn" title="立即从共享数据刷新">↻ 立即刷新</button>
+<div class="legend" aria-hidden="true">
+<span><i style="background:var(--heat0)"></i>无记录</span>
+<span><i style="background:var(--heat1)"></i>1 件</span>
+<span><i style="background:var(--heat2)"></i>2 件</span>
+<span><i style="background:var(--heat3)"></i>3 件+</span>
+</div>
+</div>
+
+<section>
+<div class="sec-head"><h2>今晚压雪作业单</h2><span class="hint">汇总全部未闭环、需夜间压雪处理的问题——收板后一键复制发给压雪车司机</span></div>
+<div class="panel">
+<h3 style="color:var(--orange)">今晚作业单 <span id="taskDateLab" style="color:var(--ink2);font-weight:500;font-size:13px"></span></h3>
+<div id="taskList"></div>
+<div class="btnrow"><button class="btn primary" id="copyTasks">复制今晚作业单（发压雪车司机）</button></div>
+</div>
+<details class="panel focus-details" id="focusDetails">
+<summary>巡查重点 · 问题高发点位 <span class="hint">按历史出现次数排，点开看</span></summary>
+<div id="focusList"></div>
+</details>
+</section>
+
+<section>
+<div class="sec-head"><h2>历史统计 · 哪段最容易出问题</h2><span class="hint">全部记录汇总，新上报的问题会自动计入</span></div>
+<div class="hist">
+<div class="panel"><h3>按雪道</h3><div id="histTrail"></div></div>
+<div class="panel"><h3>按段位</h3><div id="histSeg"></div></div>
+<div class="panel"><h3>按问题类型</h3><div id="histType"></div></div>
+</div>
+<div class="insight"><b>头号复发点：青云大道中段。</b>11 月 12 日在挑战者雪道上方靠山侧出现冰壳，13 日又在中段老 E20 上方石头崖子区域出现冰壳——同一段位连续两天、同一类问题。巡查时这段要降速细看，压雪时这段要翻雪破壳，不能只过一遍面。</div>
+</section>
+
+<section>
+<div class="sec-head"><h2>检查台账明细</h2><span class="hint">点一行，地图和详情会跳到对应段位</span></div>
+<div class="tbl-wrap">
+<table>
+<thead><tr><th>#</th><th>发现时间</th><th>上报人</th><th>雪道</th><th>段位</th><th>问题描述</th><th>类型</th><th>等级</th><th>处置</th><th>夜间压雪</th><th>状态</th><th>整改记录（人 · 巡查时间 · 结果 · 具体情况）</th></tr></thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+<div class="cards" id="cards"></div>
+</section>
+
+
+<section>
+<div class="sec-head"><h2>一天的闭环</h2></div>
+<div class="flow">
+<div class="step"><div class="s-no">白天</div><div class="s-t">巡逻队巡查上报</div><div class="s-d">按巡查重点段位降速细看，发现问题在本页按段位提交，地图实时更新。</div></div>
+<div class="step"><div class="s-no">收板后</div><div class="s-t">一键发作业单</div><div class="s-d">未闭环、需压雪处理的问题自动汇成今晚作业单，复制发给压雪车司机。</div></div>
+<div class="step"><div class="s-no">夜间</div><div class="s-t">压雪车处理</div><div class="s-d">司机照作业单逐段处理：翻雪破壳、抄雪、补雪、慢速碾压，处理完在页面上改状态。</div></div>
+<div class="step"><div class="s-no">次日早场</div><div class="s-t">再处理 + 整改登记</div><div class="s-d">按巡逻队台账登记整改：人名、巡查时间（默认系统实时时间）、结果（合格 / 未完成）、具体情况四项必填；合格闭环，未完成继续整改。</div></div>
+<div class="step"><div class="s-no">长期</div><div class="s-t">看历史热力</div><div class="s-d">哪段反复出问题一目了然，造雪、压雪资源优先投到复发段。</div></div>
+</div>
+</section>
+
+</div><!-- /detailView -->
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+var TRAILS = {
+xingguang: { name: "星光大道", level: "初级道", green: true, meta: "长 2,279 m · 落差 329 m · 均宽 32 m · 均坡 14.8% · 机压雪",
+segs: [
+{ id: "upper", name: "上段", note: "山上侧，坡面起伏段"},
+{ id: "mid", name: "中段", note: "常规巡查段"},
+{ id: "lower", name: "下段", note: "接近下站，人流渐密"},
+{ id: "entry", name: "入口 · 索道下站", note: "下站站台区，人流最集中"}
+]},
+qingyun: { name: "D14 青云大道", level: "初中级道", green: false, meta: "长 2,823 m · 落差 668 m · 均宽 45 m · 均坡 22.8% · 机压雪",
+segs: [
+{ id: "upper", name: "上段", note: "近山顶，风口段"},
+{ id: "mid", name: "中段", note: "挑战者上方 · 老 E20 石头崖子一带"},
+{ id: "lower", name: "下段", note: "回落至山脚连接区"}
+]},
+yin: { name: "青云咖啡厅引线", level: "连接道", green: false, meta: "青云咖啡厅连接线 · 短连接道",
+segs: [ { id: "full", name: "全线", note: "整条引线"}]}
+};
+var SEG_LABEL = { upper: "上段", mid: "中段", lower: "下段", entry: "入口/索道站台", full: "全线"};
+var TRAIL_NAME2KEY = { "星光大道": "xingguang", "D14 青云大道": "qingyun", "D14青云大道": "qingyun", "青云大道": "qingyun", "青云咖啡厅引线": "yin"};
+var SEG_NAME2KEY = { "上段": "upper", "中段": "mid", "下段": "lower", "入口/索道站台": "entry", "入口": "entry", "全线": "full"};
+
+/* ===== 段位自动新建 =====
+   段位不再写死，也不用手动建：一句话描述里出现的具体地点名会被解析成新段位
+   （自定义段位的 id 直接用段位名），立即出现在地图与表单中；第一条巡查记录
+   提交到该段位后，段位名随记录的 segment 字段写入共享台账，其他人打开页面时
+   segsFor() 会从记录中自动识别出这个段位并显示——无需改数据库结构，也无需改版发版。 */
+var CUSTOM_SEGS = {};
+function segLabel(id) {
+if (SEG_LABEL[id]) return SEG_LABEL[id];
+for (var tk in CUSTOM_SEGS) {
+var hit = CUSTOM_SEGS[tk].filter(function (s) { return s.id === id;})[0];
+if (hit) return hit.name;
+}
+return id || "";
+}
+function segsFor(trail) {
+var out = [], seen = {};
+(TRAILS[trail]? TRAILS[trail].segs: []).forEach(function (sg) { out.push(sg); seen[sg.id] = 1;});
+(CUSTOM_SEGS[trail] || []).forEach(function (sg) { if (!seen[sg.id]) { out.push(sg); seen[sg.id] = 1;}});
+ISSUES.forEach(function (it) {
+if (it.trail === trail && it.seg &&!seen[it.seg]) {
+seen[it.seg] = 1;
+out.push({ id: it.seg, name: segLabel(it.seg), note: "巡查中新设段位", custom: true });
+}
+});
+return out;
+}
+/* ===== 雪道 / 段位自动登记 =====
+   雪道也不再写死名单：一句话描述里出现没见过的雪道名，registerTrail() 立即建档；
+   记录提交后，雪道名随记录的 trail 字段写入共享台账，其他人打开页面时
+   ensureTrailsFromIssues() 会从记录中自动识别并建出这条雪道——无需任何人操作。 */
+function registerTrail(key, name, level) {
+if (!key || TRAILS[key]) return false;
+if (key === "pending" && (!name || name === key)) name = "待归位雪道";
+TRAILS[key] = { name: name || key, level: level || "新雪道", green: false, auto: true,
+meta: "巡查上报中自动新建 · 参数待补充",
+segs: [
+{ id: "upper", name: "上段", note: "山上侧"},
+{ id: "mid", name: "中段", note: "常规巡查段"},
+{ id: "lower", name: "下段", note: "接近下站"},
+{ id: "entry", name: "入口 · 索道下站", note: "站台区"}
+]};
+return true;
+}
+function ensureTrailsFromIssues() {
+ISSUES.forEach(function (it) {
+if (it.trail && !TRAILS[it.trail]) registerTrail(it.trail, it.trail);
+});
+}
+function registerSeg(trail, name, note) {
+if (!trail || !name) return;
+if (segsFor(trail).filter(function (sg) { return sg.id === name || sg.name === name;}).length) return;
+if (!CUSTOM_SEGS[trail]) CUSTOM_SEGS[trail] = [];
+CUSTOM_SEGS[trail].push({ id: name, name: name, note: note || "上报描述中新地点，自动新建", custom: true });
+}
+function fillTrailOptions(selected) {
+var cur = selected || $("#fTrail").value;
+var h = Object.keys(TRAILS).map(function (k) {
+return '<option value="' + esc(k) + '">' + esc(TRAILS[k].name) + (TRAILS[k].auto? "（自动新建）": "") + "</option>";
+}).join("");
+$("#fTrail").innerHTML = h;
+$("#fTrail").value = TRAILS[cur]? cur: "qingyun";
+}
+function fillSegOptions(trail, selected) {
+var opts = segsFor(trail).slice();
+if (!opts.filter(function (s) { return s.id === "full";}).length && trail!== "yin") opts.push({ id: "full", name: "全线"});
+var cur = selected || $("#fSeg").value;
+var h = opts.map(function (sg) { return '<option value="' + esc(sg.id) + '">' + esc(sg.name) + (sg.custom? "（新设）": "") + "</option>";}).join("");
+$("#fSeg").innerHTML = h;
+var has = opts.filter(function (sg) { return sg.id === cur;}).length > 0;
+$("#fSeg").value = has? cur: opts[0].id;
+}
+
+/* ===== 一句话解析：问题是什么 · 出现在哪 · 建议如何处理 =====
+   纯本地关键词匹配：雪道名（含自动新建）、段位（上/中/下/入口/全线，
+   或描述里的具体地点名 → 自动新建段位）、问题类型、严重等级、
+   是否需夜间压雪、负责队伍与建议处置（从描述里摘，或按类型生成）。 */
+var TYPE_RULES = [
+{ type: "安全网/防护垫缺失或破损", keys: ["安全网", "防护垫", "防护网", "护网", "围网"]},
+{ type: "标识标牌缺失或错误", keys: ["标识", "标牌", "指示牌", "牌子", "标志"]},
+{ type: "露土露石", keys: ["露石", "露土", "石头露", "露出石头", "露出土"]},
+{ type: "积雪不足/露底", keys: ["露底", "雪薄", "雪层薄", "雪层偏薄", "雪太薄", "厚度不足", "雪少"]},
+{ type: "未压雪/雪道未按时开放", keys: ["没压", "未压", "没压雪", "未开放", "没开放", "未按时开放", "还没开"]},
+{ type: "冰面/压雪不实", keys: ["冰壳", "冰疙瘩", "冰面", "结冰", "冰块", "打滑", "太滑", "很滑", "发冰", "有冰", "化雪", "返软", "松散", "雪软", "压得不实", "压雪不实"]},
+{ type: "雪包雪棱/雪面不平", keys: ["雪包", "雪棱", "雪块", "雪堆", "不平", "坑洼", "凹陷", "搓板", "鼓包"]}
+];
+var DEFAULT_ACTION = {
+"冰面/压雪不实": { action: "夜间翻雪破除冰面、冰壳并重新压实", team: "压雪队", groom: true},
+"积雪不足/露底": { action: "补雪回填并压雪至安全厚度", team: "造雪队", groom: true},
+"雪包雪棱/雪面不平": { action: "夜间压雪推平、收整雪面", team: "压雪队", groom: true},
+"露土露石": { action: "抄雪覆盖露出的石土并压实，周边加设提示", team: "压雪队", groom: true},
+"未压雪/雪道未按时开放": { action: "按计划补压雪，确认开放时间", team: "压雪队", groom: true},
+"安全网/防护垫缺失或破损": { action: "先围挡警示，再修复补装安全网 / 防护垫", team: "巡逻队", groom: false},
+"标识标牌缺失或错误": { action: "补设 / 更正标识标牌", team: "巡逻队", groom: false},
+"其他": { action: "现场核查后处置", team: "巡逻队", groom: false}
+};
+function parseDescription(raw) {
+var text = String(raw || "").replace(/\s+/g, "");
+var out = { trail: "", trailName: "", trailNew: false, seg: "", segName: "", segNew: false,
+type: "其他", level: "Ⅲ级", needGroom: false, team: "巡逻队", action: "", actionFromText: false, segDefaulted: false};
+/* --- 雪道：先认已有（包括之前自动新建的），再认新名字 --- */
+var aliases = [["星光", "xingguang"], ["青云", "qingyun"], ["D14", "qingyun"], ["d14", "qingyun"], ["咖啡厅引线", "yin"], ["引线", "yin"]];
+var hitKey = "";
+Object.keys(TRAILS).forEach(function (k) {
+if (hitKey) return;
+var nm = TRAILS[k].name.replace(/^D14\s*/, "");
+if (nm && text.indexOf(nm) >= 0) hitKey = k;
+});
+if (!hitKey) aliases.forEach(function (a) { if (!hitKey && text.indexOf(a[0]) >= 0) hitKey = a[1];});
+if (hitKey) { out.trail = hitKey; out.trailName = TRAILS[hitKey].name;}
+if (!out.trail) {
+var mNew = text.match(/([A-Za-z]?\d{0,3}[\u4e00-\u9fa5]{1,8}?(?:大道|雪道|练习道|地形公园|连接道|引线|回转道))/)
+|| text.match(/(?:在|位于|^)([\u4e00-\u9fa5]{2,6}?)(?:上段|中段|下段|入口|全线|的|有|出现)/);
+if (mNew && !/问题|雪面|今天|昨天|早上|晚上/.test(mNew[1])) {
+var nm2 = mNew[1].replace(/^(在|位于)/, "");
+out.trail = nm2; out.trailName = nm2; out.trailNew = true;
+}
+}
+if (!out.trail) { out.trail = "pending"; out.trailName = "待归位（描述里没提雪道名）"; out.trailPending = true;}
+/* --- 段位：先认上/中/下/入口/全线，再认具体地点名（自动新建） --- */
+if (/上段|上部|靠近山顶|山顶一带|上面一段/.test(text)) { out.seg = "upper";}
+else if (/中段|中间段|中间一段/.test(text)) { out.seg = "mid";}
+else if (/下段|下部|靠近山脚|山脚一带|下面一段/.test(text)) { out.seg = "lower";}
+else if (/入口|下站|上站|索道站|站台/.test(text)) { out.seg = "entry";}
+else if (/全线|整条|全道|整段/.test(text)) { out.seg = "full";}
+if (out.seg) { out.segName = segLabel(out.seg);}
+if (!out.seg) {
+var mPlace = text.match(/([\u4e00-\u9fa5A-Za-z0-9]{2,10}?(?:崖子|弯道|大弯|塔架|区域|一带|上方|下方|东侧|西侧|南侧|北侧|靠山侧|陡坡|缓坡|雪桥|桥头|岔口|路口))/)
+|| text.match(/(?:在|位于)([\u4e00-\u9fa5]{2,6}?)(?:那儿|那里|这边|附近|一带)/);
+if (mPlace) { out.seg = mPlace[1]; out.segName = mPlace[1]; out.segNew = true;}
+}
+if (!out.seg) { out.seg = "full"; out.segName = "全线"; out.segDefaulted = true;}
+/* --- 问题类型 --- */
+for (var i = 0; i < TYPE_RULES.length; i++) {
+var rule = TYPE_RULES[i], found = false;
+rule.keys.forEach(function (k) { if (text.indexOf(k) >= 0) found = true;});
+if (found) { out.type = rule.type; break;}
+}
+/* --- 严重等级 --- */
+if (/Ⅰ级|一级/.test(text)) out.level = "Ⅰ级";
+else if (/危险|封道|关闭雪道|影响开放|紧急|容易受伤|摔伤|很危险/.test(text)) out.level = "Ⅰ级";
+else if (/Ⅱ级|二级/.test(text)) out.level = "Ⅱ级";
+else if (/严重|大面积|特别滑|非常滑/.test(text)) out.level = "Ⅱ级";
+/* --- 建议处置：先从描述里摘动词短语，摘不到按类型生成 --- */
+var clauses = text.split(/[，,；;。]/).filter(Boolean);
+var actClause = "";
+clauses.forEach(function (c) {
+var cc = c.replace(/^(建议|请|需要|要|应该|最好|处置|处理)/, "");
+if (/(压雪|翻雪|抄雪|补雪|推雪|碾压|修复|补装|更换|清理|收整|拔杆|立牌|围挡|封闭|回填|覆盖|推平|破除|破壳)/.test(cc) && !actClause) actClause = cc;
+});
+var dft = DEFAULT_ACTION[out.type] || DEFAULT_ACTION["其他"];
+if (actClause && actClause.length >= 4) { out.action = actClause; out.actionFromText = true;}
+else out.action = dft.action;
+out.team = dft.team;
+if (/造雪队/.test(text)) out.team = "造雪队";
+else if (/压雪队/.test(text)) out.team = "压雪队";
+else if (/巡逻队/.test(text)) out.team = "巡逻队";
+out.needGroom = /(压雪|翻雪|抄雪|补雪|推雪|碾压)/.test(out.action) || /今晚|夜间|夜里/.test(text) && dft.groom;
+return out;
+}
+var manualLocked = false;
+var lastParse = null;
+function applyParse(p) {
+lastParse = p;
+fillTrailOptions(p.trailNew? p.trail: p.trail);
+if (p.trailNew) registerTrail(p.trail, p.trailName);
+if (p.segNew) registerSeg(p.trail, p.segName);
+fillTrailOptions(p.trail);
+fillSegOptions(p.trail, p.seg);
+$("#fType").value = p.type;
+$("#fLevel").value = p.level;
+$("#fGroom").value = p.needGroom? "yes": "no";
+$("#fTeam").value = p.team;
+}
+function renderParsePreview() {
+var text = $("#fTalk").value.trim();
+var box = $("#parseChips"), act = $("#parseAct"), wrap = $("#parseBox");
+if (!text) {
+if (box) box.innerHTML = "";
+if (act) act.innerHTML = "";
+if (wrap) wrap.hidden = true;
+lastParse = null; return;
+}
+if (wrap) wrap.hidden = false;
+var p = parseDescription(text);
+if (!manualLocked) applyParse(p); else lastParse = p;
+function chip(lab, val, isNew, warn) {
+return '<span class="mchip' + (warn? " warn": "") + '">' + lab + ' <b>' + esc(val) + "</b>" + (isNew? '<span class="new-badge">自动新建</span>': "") + "</span>";
+}
+box.innerHTML =
+chip("雪道", p.trailPending? p.trailName: p.trailName, p.trailNew, p.trailPending) +
+chip("段位", p.segName + (p.segDefaulted? "（没提具体段位，先记全线）": ""), p.segNew, p.segDefaulted) +
+chip("类型", p.type, false, false) +
+chip("等级", p.level, false, false) +
+chip("今晚压雪", p.needGroom? "是 · 进作业单": "否", false, false) +
+chip("负责", p.team, false, false) +
+(manualLocked? '<span class="mchip warn">已手动调整，以手动选择为准</span>': "");
+act.innerHTML = "<b>建议处置：</b>" + esc(p.action) + (p.actionFromText? "（按你描述里的说法）": "（按问题类型自动生成，可在下方手动调整里改）");
+}
+
+/* 内置快照：连不上 Supabase 时先显示这 6 条（与数据库表 trail_issues 中已导入的 6 条一致，文字以库中 problem / note 原文为准） */
+var SEED = [
+{ id: 1, date: "2026-11-12", trail: "qingyun", seg: "full", desc: "当日气温偏高，雪面出现融化返软（化雪）、雪质松散，需夜间温度下降后重新压雪", type: "冰面/压雪不实", level: "Ⅲ级", affects: "否", status: "已闭环", done: "2026-11-13", review: "合格", reviewer: "唐庆全", team: "压雪队", owner: "张斌", action: "待夜间温度下降后重新压雪", needGroom: true, reporter: "", note: "责任：压雪队 张斌，待夜间温度下降后重新压雪｜来源：微信群12日13:36上报并@张斌（原话未指明具体雪道，按青云雪道记录）"},
+{ id: 2, date: "2026-11-12", trail: "yin", seg: "full", desc: "青云咖啡厅引线雪道有雪块，需夜间拔杆并收整雪块", type: "雪包雪棱/雪面不平", level: "Ⅲ级", affects: "否", status: "已闭环", done: "2026-11-13", review: "合格", reviewer: "唐庆全", team: "压雪队", owner: "张斌", action: "夜间拔杆收整雪块", needGroom: true, reporter: "", note: "责任：压雪队 张斌，夜间拔杆收整雪块｜来源：微信群12日13:57上报并@张斌"},
+{ id: 3, date: "2026-11-12", trail: "qingyun", seg: "mid", desc: "青云中段挑战者雪道上方靠山上侧，因温度升高出现冰壳", type: "冰面/压雪不实", level: "Ⅲ级", affects: "否", status: "已闭环", done: "2026-11-13", review: "合格", reviewer: "唐庆全", team: "压雪队", owner: "张斌", action: "夜间抄雪处理（破除冰壳并翻雪补雪）", needGroom: true, reporter: "", note: "责任：压雪队 张斌，夜间抄雪处理（破除冰壳并翻雪补雪）｜来源：微信群12日14:02上报并@张斌"},
+{ id: 4, date: "2026-11-13", trail: "xingguang", seg: "upper", desc: "星光大道上段雪面出现多处冰疙瘩，板底易打滑，新手易摔", type: "冰面/压雪不实", level: "Ⅲ级", affects: "否", status: "已闭环", done: "2026-11-14", review: "合格", reviewer: "王雷", team: "压雪队", owner: "张斌", action: "压雪车慢速反复碾压破碎冰疙瘩后重新压平", needGroom: true, reporter: "", note: "责任：压雪队 张斌，压雪车慢速反复碾压破碎冰疙瘩后重新压平｜来源：微信工作群13日13:53上报并@张斌"},
+{ id: 5, date: "2026-11-13", trail: "xingguang", seg: "entry", desc: "星光大道下站（索道下站）区域雪层偏薄，存在板底外露风险", type: "积雪不足/露底", level: "Ⅲ级", affects: "否", status: "已闭环", done: "2026-11-14", review: "合格", reviewer: "王雷", team: "造雪队", owner: "张斌", action: "补雪回填并压雪至安全厚度，下站人流集中建议当日处置", needGroom: true, reporter: "", note: "责任：造雪队 张斌，补雪回填并压雪至安全厚度，下站人流集中建议当日处置｜来源：13日14:01上报并@张斌"},
+{ id: 6, date: "2026-11-13", trail: "qingyun", seg: "mid", desc: "青云大道中段老E20上方石头崖子区域出现冰壳", type: "冰面/压雪不实", level: "Ⅲ级", affects: "否", status: "已闭环", done: "2026-11-14", review: "合格", reviewer: "姜玥", team: "压雪队", owner: "张斌", action: "翻雪破除冰壳并翻松混匀，同步检查石头崖子区域雪层覆盖", needGroom: true, reporter: "", note: "责任：压雪队 张斌，翻雪破除冰壳并翻松混匀，同步检查石头崖子区域雪层覆盖｜来源：13日14:19上报（原话“老E20上、石头崖子区域有冰壳”）"}
+];
+
+/* ===== Supabase 实时数据层（项目 beidahu-trail-quality，表 trail_issues）=====
+   下面的 URL 与 publishable 密钥本就是公开的浏览器端密钥，靠数据库行级权限（RLS）控制：
+   匿名可读、可新增、可改状态，不可删除。它不是 GitHub 那种特权凭证，公开在页面里是这类数据库的标准用法。
+   读取 / 新增 / 改状态走 Supabase REST 接口；实时推送走 supabase-js 的 postgres_changes 订阅。
+   若配置留空或连不上库，页面退回离线模式：显示内置快照，增改只存在本机内存并明确标注未同步。 */
+var SUPABASE_URL = "https://fwyllyrufkioshfbgdbk.supabase.co";
+var SUPABASE_ANON_KEY = "sb_publishable_ZSDpGvpTBUjU_DBaO2xlyQ_6_hKWu8C";
+var SB_TABLE = "trail_issues";
+var DB_TRAIL_NAME = { xingguang: "星光大道", qingyun: "D14青云大道", yin: "青云咖啡厅引线"};
+var ISSUES = SEED.slice();
+var syncing = false;
+var lastSync = "";
+var offlineMode = !(SUPABASE_URL && SUPABASE_ANON_KEY);
+var lastSig = "";
+var sbClient = null;
+var rtChannel = null;
+function sbConfigured() { return !!(SUPABASE_URL && SUPABASE_ANON_KEY);}
+function dataSig(list) {
+return list.map(function (x) { return [x.id, x.date, x.time || "", x.trail, x.seg, x.desc, x.status, x.reporter || "", x.needGroom? 1: 0].join("|");}).join(";") + "#" + list.length;
+}
+
+function pad2(n) { return (n < 10? "0": "") + n;}
+function todayStr() { var d = new Date(); return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());}
+function nowTime() { var d = new Date(); return pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + ":" + pad2(d.getSeconds());}
+function $(s, r) { return (r || document).querySelector(s);}
+function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s));}
+function esc(s) { return String(s == null? "": s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c];});}
+function fmtDate(d) { if (!d) return "—"; var p = d.split("-"); return (+p[1]) + "月" + (+p[2]) + "日";}
+function weekday(d) { var p = d.split("-"); return ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][new Date(+p[0], +p[1] - 1, +p[2]).getDay()];}
+function toast(msg) {
+var t = $("#toast"); t.textContent = msg; t.classList.add("show");
+clearTimeout(t._h); t._h = setTimeout(function () { t.classList.remove("show");}, 2600);
+}
+function copyText(txt, okMsg) {
+function done() { toast(okMsg);}
+if (navigator.clipboard && navigator.clipboard.writeText) {
+navigator.clipboard.writeText(txt).then(done, function () { fallback();});
+} else { fallback();}
+function fallback() {
+var ta = document.createElement("textarea"); ta.value = txt; ta.style.position = "fixed"; ta.style.opacity = "0";
+document.body.appendChild(ta); ta.select();
+try { document.execCommand("copy"); done();} catch (e) { toast("复制失败，请长按文本手动复制");}
+document.body.removeChild(ta);
+}
+}
+
+/* 数据库记录 <-> 页面记录：负责队伍 / 负责人 / 处置办法没有独立列，统一写在 note 里
+（格式「责任：X队 姓名，处置办法｜来源：…」），读取时解析出来展示 */
+function parseNote(note) {
+var out = { team: "", owner: "", action: ""};
+if (!note) return out;
+var m = String(note).match(/责任：\s*(\S+?队|其他)\s+(\S+?)[，,、]\s*([^｜]+)/);
+if (m) { out.team = m[1]; out.owner = m[2]; out.action = m[3].replace(/[｜\s]+$/, "");}
+return out;
+}
+function fromDb(r) {
+var parsed = parseNote(r.note);
+return {
+id: r.id, date: r.date || "", time: r.time? String(r.time).slice(0, 5): "",
+trail: TRAIL_NAME2KEY[r.trail] || r.trail || "qingyun",
+seg: SEG_NAME2KEY[r.segment] || r.segment || "full",
+desc: r.problem || "", type: r.type || "其他", level: r.severity || "Ⅲ级",
+affects: r.affects_open || "否", status: r.status || "待分派",
+done: r.done_date || "", review: r.recheck || "", reviewer: r.rechecker || "",
+team: parsed.team || "", owner: parsed.owner || "", action: parsed.action || "",
+needGroom: (typeof r.needs_grooming === "boolean")? r.needs_grooming: (parsed.team.indexOf("压雪") >= 0),
+reporter: r.reporter || "", note: r.note || "", raw: r
+};
+}
+function toDbInsert(it) {
+return {
+date: it.date, time: it.time || null,
+trail: DB_TRAIL_NAME[it.trail] || it.trail,
+level: TRAILS[it.trail]? TRAILS[it.trail].level: "",
+segment: segLabel(it.seg),
+problem: it.desc, type: it.type, severity: it.level,
+affects_open: it.affects || "否", status: it.status,
+done_date: it.done || null, recheck: it.review || null, rechecker: it.reviewer || null,
+note: it.note || "", reporter: it.reporter || null,
+needs_grooming:!!it.needGroom
+};
+}
+function fmtDateTime(it) { var d = fmtDate(it.date); return it.time? d + " " + String(it.time).slice(0, 5): d;}
+function nowHHMM() { var d = new Date(); return pad2(d.getHours()) + ":" + pad2(d.getMinutes());}
+ISSUES.forEach(function (it) { if (!it.time) it.time = "";});
+function sbHeaders(extra) {
+var h = { "apikey": SUPABASE_ANON_KEY, "Authorization": "Bearer " + SUPABASE_ANON_KEY, "Content-Type": "application/json"};
+if (extra) for (var k in extra) h[k] = extra[k];
+return h;
+}
+function sbLoad() {
+return fetch(SUPABASE_URL + "/rest/v1/" + SB_TABLE + "?select=*&order=id.asc", { headers: sbHeaders(), cache: "no-store"}).then(function (res) {
+if (!res.ok) throw new Error("HTTP " + res.status);
+return res.json();
+}).then(function (arr) { return arr.map(fromDb);});
+}
+function sbPost(payload) {
+return fetch(SUPABASE_URL + "/rest/v1/" + SB_TABLE, { method: "POST", headers: sbHeaders({ "Prefer": "return=representation"}), body: JSON.stringify(payload)}).then(function (res) {
+if (!res.ok) return res.text().then(function (t) { throw new Error("HTTP " + res.status + " " + t);});
+return res.json();
+});
+}
+function sbInsert(it) {
+var payload = toDbInsert(it);
+return sbPost(payload).then(function (rows) { return rows[0];}).catch(function (e) {
+/* time 列万一尚未就绪，去掉 time 重试一次，保证记录本身先报上去 */
+if (payload.time && /time/.test(String(e && e.message))) {
+delete payload.time;
+return sbPost(payload).then(function (rows) { return rows[0];});
+}
+throw e;
+});
+}
+function sbPatchStatus(id, f) {
+var patch = { status: f.status, done_date: f.done_date, recheck: f.recheck, rechecker: f.rechecker};
+if (f.note != null) patch.note = f.note;
+return fetch(SUPABASE_URL + "/rest/v1/" + SB_TABLE + "?id=eq." + id, { method: "PATCH", headers: sbHeaders({ "Prefer": "return=representation"}), body: JSON.stringify(patch)}).then(function (res) {
+if (!res.ok) throw new Error("HTTP " + res.status);
+return res.json();
+}).then(function (rows) { return rows[0] || null;});
+}
+function setSync(mode, extra) {
+var b = $("#syncBadge"); b.className = "sync-badge" + (mode === "ok"? " ok": mode === "err"? " err": "");
+$("#syncText").textContent = mode === "ok"? "已同步 · " + (extra || lastSync): mode === "err"? "同步失败，点「立即刷新」重试": "正在同步…";
+}
+function refresh(announce) {
+if (syncing) return;
+if (!sbConfigured()) { offlineMode = true; setSync("err"); return;}
+sbLoad().then(function (list) {
+offlineMode = false; lastSync = nowTime(); setSync("ok");
+if (dataSig(list)!== dataSig(ISSUES)) {
+ISSUES = list; renderAll();
+if (announce) toast("数据已更新 · " + lastSync);
+}
+}).catch(function () { offlineMode = true; setSync("err");});
+}
+/* 实时订阅：库里任何新增 / 状态变更都推送过来，立即刷新全部视图；订阅不可用时靠每分钟轮询兜底 */
+function setupRealtime() {
+try {
+if (!sbConfigured() || !window.supabase || !window.supabase.createClient || rtChannel) return;
+if (!sbClient) sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+rtChannel = sbClient.channel("trail-issues-live")
+.on("postgres_changes", { event: "*", schema: "public", table: SB_TABLE}, function () { refresh(false);})
+.subscribe();
+} catch (e) { /* 实时通道建不起来不影响使用，轮询会接住 */ }
+}
+function statusFields(it, to, op) {
+var done = it.done || "", review = it.review || "", reviewer = it.reviewer || "";
+if (to === "已整改待复查" &&!done) done = todayStr();
+if (to === "已闭环") { review = "合格"; if (op) reviewer = op; if (!done) done = todayStr();}
+if (to === "整改中" && it.status === "已整改待复查") review = "";
+return { status: to, done_date: done || null, recheck: review || null, rechecker: reviewer || null, _done: done, _review: review, _reviewer: reviewer};
+}
+function applyStatusLocal(it, f) { it.status = f.status; it.done = f._done; it.review = f._review; it.reviewer = f._reviewer;}
+function findIssue(id) { var t = null; ISSUES.forEach(function (x) { if (x.id === id) t = x;}); return t;}
+/* 改状态：先写库；写不进去（离线）就先改本机内存并明确提示未同步 */
+function changeStatus(id, to, op) {
+if (syncing) { toast("正在同步上一笔，请稍候再试"); return Promise.reject(new Error("busy"));}
+var it = findIssue(id);
+if (!it) return Promise.reject(new Error("notfound"));
+var f = statusFields(it, to, op);
+function localWarn() {
+applyStatusLocal(it, f); offlineMode = true; setSync("err"); renderAll();
+toast("未连上共享库，状态已先在本机改为「" + to + "」（未同步，联网后以共享数据为准）");
+}
+if (!sbConfigured()) { localWarn(); return Promise.resolve();}
+syncing = true; setSync("busy");
+return sbPatchStatus(id, f).then(function (row) {
+syncing = false;
+if (row) { var ni = fromDb(row); for (var i = 0; i < ISSUES.length; i++) if (ISSUES[i].id === id) ISSUES[i] = ni;}
+else applyStatusLocal(it, f);
+lastSync = nowTime(); offlineMode = false; setSync("ok"); renderAll();
+toast("状态已更新为「" + to + "」，所有人可见");
+}).catch(function () { syncing = false; localWarn();});
+}
+/* ===== 整改登记（按巡逻队内部 Excel 管理表）=====
+   每条问题整改时四项必填：整改人姓名、巡查时间、整改结果（合格 / 未完成）、具体情况。
+   巡查时间默认取系统实时时间（未手动改过时持续跟随系统时钟，提交瞬间再刷新一次），可手动改。
+   合格 → 已闭环；未完成 → 退回整改中、继续处理。数据映射到共享台账已有字段：
+   人名→rechecker、巡查时间→done_date、结果→recheck，具体情况随整改记录写进 note
+   （格式「整改记录：姓名 时间 结果X：具体情况」，多次整改逐条累积，不覆盖）。 */
+function parseRectRecords(note) {
+var recs = [];
+String(note || "").split("｜").forEach(function (seg) {
+var m = seg.match(/^整改记录：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)\s+结果(合格|未完成)：([\s\S]*)$/);
+if (m) recs.push({ by: m[1], time: m[2], result: m[3], detail: m[4]});
+});
+return recs;
+}
+function rectRecordsFor(it) {
+var recs = parseRectRecords(it.note);
+if (recs.length) return recs;
+if (it.reviewer || it.done || it.review) {
+return [{ by: it.reviewer || "", time: it.done || "", result: it.review || (it.status === "已闭环"? "合格": ""), detail: it.action || ""}];
+}
+return [];
+}
+function rectSummary(it) {
+var recs = rectRecordsFor(it);
+if (!recs.length) return "尚未登记";
+var r = recs[recs.length - 1];
+return (r.by || "未记名") + " · 巡查时间 " + fmtRectTime(r.time) + " · " + (r.result || "") + (r.detail? " · " + r.detail: "") + (recs.length > 1? "（共 " + recs.length + " 次登记，显示最近一次）": "");
+}
+function nowDateTimeLocal() { var d = new Date(); return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) + "T" + pad2(d.getHours()) + ":" + pad2(d.getMinutes());}
+function tickRectTimes() {
+$$('input[id^="rectTime-"]').forEach(function (el) {
+if (el.getAttribute("data-manual") === "1") return;
+if (document.activeElement === el) return;
+el.value = nowDateTimeLocal();
+});
+}
+setInterval(tickRectTimes, 15000);
+function fmtRectTime(t) {
+if (!t) return "";
+var m = String(t).match(/^(\d{4}-\d{2}-\d{2})(?:[T\s](\d{2}:\d{2}))?/);
+return m? fmtDate(m[1]) + (m[2]? " " + m[2]: ""): String(t);
+}
+function rectLineHtml(it) {
+var recs = rectRecordsFor(it);
+if (!recs.length) return '<div class="rect-rec">整改记录：尚未登记（整改时必填人名、巡查时间、结果和具体情况）</div>';
+return '<div class="rect-rec">' + recs.map(function (r) {
+return '<div class="rr-line">整改：<b>' + esc(r.by || "未记名") + "</b> · 巡查时间 " + esc(fmtRectTime(r.time)) +
+' · <span class="' + (r.result === "合格"? "rr-ok": "rr-no") + '">' + esc(r.result || "") + "</span>" +
+(r.detail? " · 具体情况：" + esc(r.detail): "") + "</div>";
+}).join("") + "</div>";
+}
+function submitRectification(id, data) {
+if (syncing) { toast("正在同步上一笔，请稍候再试"); return Promise.reject(new Error("busy"));}
+var it = findIssue(id);
+if (!it) return Promise.reject(new Error("notfound"));
+var datePart = data.datetime.slice(0, 10);
+var timeDisp = datePart + " " + data.datetime.slice(11, 16);
+var cleanDetail = String(data.detail || "").replace(/[｜\r\n]+/g, " ").trim();
+var cleanBy = String(data.by || "").replace(/\s+/g, "");
+var seg = "整改记录：" + cleanBy + " " + timeDisp + " 结果" + data.result + "：" + cleanDetail;
+var newNote = (it.note? it.note + "｜": "") + seg;
+var toStatus = data.result === "合格"? "已闭环": "整改中";
+var f = { status: toStatus, done_date: datePart, recheck: data.result, rechecker: cleanBy, note: newNote};
+function applyLocal() {
+it.status = toStatus; it.done = datePart; it.review = data.result; it.reviewer = cleanBy; it.note = newNote;
+}
+function localWarn() {
+applyLocal(); offlineMode = true; setSync("err"); renderAll();
+toast("未连上共享库，整改记录已先记在本机（未同步，联网后以共享数据为准）");
+}
+if (!sbConfigured()) { localWarn(); return Promise.resolve();}
+syncing = true; setSync("busy");
+return sbPatchStatus(id, f).then(function (row) {
+syncing = false;
+if (row) { var ni = fromDb(row); for (var i = 0; i < ISSUES.length; i++) if (ISSUES[i].id === id) ISSUES[i] = ni;}
+else applyLocal();
+lastSync = nowTime(); offlineMode = false; setSync("ok"); renderAll();
+toast(data.result === "合格"? "整改合格，已闭环，所有人可见": "已登记「未完成」，退回继续整改");
+}).catch(function () { syncing = false; localWarn();});
+}
+
+/* 新增上报：先写库；写不进去就先记本机内存并明确提示未同步 */
+function submitIssue(rec) {
+function localAdd() {
+var maxId = 0; ISSUES.forEach(function (x) { if (x.id > maxId) maxId = x.id;});
+var c = JSON.parse(JSON.stringify(rec)); c.id = maxId + 1; ISSUES.push(c); renderAll(); return c;
+}
+if (!sbConfigured()) {
+offlineMode = true; setSync("err");
+var c0 = localAdd();
+toast("未配置共享库，这条已先记在本机（未同步）");
+return Promise.resolve(c0);
+}
+syncing = true; setSync("busy");
+return sbInsert(rec).then(function (row) {
+syncing = false;
+var c = fromDb(row); ISSUES.push(c);
+lastSync = nowTime(); offlineMode = false; setSync("ok"); renderAll();
+toast("已上报并同步，所有打开页面的人都能看到");
+return c;
+}).catch(function () {
+syncing = false; offlineMode = true; setSync("err");
+var c = localAdd();
+toast("未连上共享库，这条已先记在本机（未同步，联网后以共享数据为准）");
+return c;
+});
+}
+
+var state = { date: todayStr(), trail: "qingyun", seg: "mid", openTrails: { qingyun: true}};
+var rectOpen = {}; /* 每条问题的整改登记展开状态：点开后可再点收起，重新渲染时保持 */
+function inDate(it) { return state.date === "all" || it.date === state.date;}
+function segIssues(trail, seg, useDate) {
+return ISSUES.filter(function (it) { return it.trail === trail && it.seg === seg && (!useDate || inDate(it));});
+}
+function statusClass(s) { return s === "已闭环"? "closed": s === "整改中"? "wip": s === "已整改待复查"? "review": "open";}
+
+function renderChips() {
+var dates = {};
+ISSUES.forEach(function (i) { dates[i.date] = 1;});
+dates[todayStr()] = 1;
+var list = Object.keys(dates).sort().reverse();
+if (state.date!== "all" &&!dates[state.date]) state.date = "all";
+var h = '<button class="chip" data-date="all" aria-pressed="' + (state.date === "all") + '">全部</button>';
+list.forEach(function (d) {
+var lab = d === todayStr()? "今日 " + fmtDate(d) + " · " + weekday(d): fmtDate(d) + " · " + weekday(d);
+h += '<button class="chip" data-date="' + d + '" aria-pressed="' + (state.date === d) + '">' + lab + "</button>";
+});
+$("#dateChips").innerHTML = h;
+var homeChips = $("#dateChipsHome"); if (homeChips) homeChips.innerHTML = h;
+$$("#dateChips .chip, #dateChipsHome .chip").forEach(function (c) {
+c.addEventListener("click", function () { state.date = c.getAttribute("data-date"); renderAll();});
+});
+}
+
+function renderKpis() {
+var vis = ISSUES.filter(inDate);
+var closed = vis.filter(function (i) { return i.status === "已闭环";}).length;
+var rate = vis.length? Math.round(closed / vis.length * 100): 0;
+var groomN = ISSUES.filter(function (i) { return i.needGroom && i.status!== "已闭环";}).length;
+var midCount = ISSUES.filter(function (i) { return i.trail === "qingyun" && i.seg === "mid";}).length;
+$("#kpis").innerHTML =
+kpi(vis.length + " 件", state.date === "all"? "问题数（全部记录）": fmtDate(state.date) + " 发现的问题", "") +
+kpi((vis.length - closed) + " 件", "未闭环（所选时段）", vis.length - closed > 0? "alert": "") +
+kpi(rate + "%", "闭环率（所选时段）", "") +
+kpi(groomN + " 件", "今晚待压雪（全部未闭环）", groomN > 0? "hot": "") +
+kpi("青云中段 ×" + midCount, "头号复发段 · 连续 2 天冰壳", "hot");
+function kpi(n, l, cls) { return '<div class="kpi ' + cls + '"><div class="num">' + esc(n) + '</div><div class="lab">' + esc(l) + "</div></div>";}
+}
+
+function renderMap() {
+var html = "";
+Object.keys(TRAILS).filter(function (k) { return k !== "yin";}).forEach(function (tk) {
+var tr = TRAILS[tk];
+var isOpen = !!state.openTrails[tk];
+var tAll = ISSUES.filter(function (i) { return i.trail === tk;}).length;
+var tVis = ISSUES.filter(function (i) { return i.trail === tk && inDate(i);}).length;
+var tOpen = ISSUES.filter(function (i) { return i.trail === tk && i.status !== "已闭环";}).length;
+html += '<div class="trail-acc"><button type="button" class="trail-toggle" data-acc="' + tk + '" aria-expanded="' + isOpen + '">' +
+'<span class="trail-name">' + esc(tr.name) + '<span class="lvl' + (tr.green? " green": "") + '">' + esc(tr.level) + '</span></span>' +
+'<span class="trail-counts">所选时段 ' + tVis + " 件 · 历史共 " + tAll + " 件" + (tOpen? ' · <b>未闭环 ' + tOpen + "</b>": "") + '</span>' +
+'<span class="chev" aria-hidden="true">›</span></button>' +
+'<div class="trail-meta" style="margin:4px 2px 0">' + esc(tr.meta) + "</div>" +
+'<div class="trail-body"' + (isOpen? "": " hidden") + ">";
+html += '<div class="endmark">▲ 山顶 / 上站</div>';
+var fulls = segIssues(tk, "full", true);
+var fullAll = segIssues(tk, "full", false).length;
+if (tk === "qingyun" || tr.auto) {
+html += '<button class="ribbon" data-trail="' + tk + '" data-seg="full" aria-pressed="' + (state.trail === tk && state.seg === "full") + '">' +
+"<b>全线</b> · 所选时段 " + fulls.length + " 件（历史共 " + fullAll + " 件）" + (tk === "qingyun"? "— 气温偏高返软时整条道受影响": "— 没指明段位的问题记在这里") + "</button>";
+}
+segsFor(tk).forEach(function (sg) {
+var list = segIssues(tk, sg.id, true);
+var allN = segIssues(tk, sg.id, false).length;
+var openN = list.filter(function (i) { return i.status!== "已闭环";}).length;
+var n = list.length;
+var heat = n === 0? 0: n === 1? 1: n === 2? 2: 3;
+var types = [];
+list.forEach(function (i) { if (types.indexOf(i.type) < 0) types.push(i.type);});
+html += '<button class="seg h' + heat + '" data-trail="' + tk + '" data-seg="' + esc(sg.id) + '" aria-pressed="' + (state.trail === tk && state.seg === sg.id) + '">' +
+'<span class="seg-top"><span class="seg-name">' + esc(sg.name) + '</span>' +
+(sg.custom? '<span class="tag">新设段位</span>': "") +
+(allN >= 2? '<span class="tag repeat">反复出现</span>': "") +
+(openN > 0? '<span class="tag openct">未闭环 ' + openN + "</span>": "") +
+'<span class="cnt ' + (n === 0? "": n === 1? "n1": n === 2? "n2": "n3") + '">' + n + "</span></span>" +
+'<span class="seg-note">' + esc(sg.note) + " · 历史共 " + allN + " 件</span>" +
+(types.length? '<span class="tags">' + types.map(function (t) { return '<span class="tag">' + esc(t) + "</span>";}).join("") + "</span>": "") +
+"</button>";
+});
+html += '<div class="endmark">▼ 山脚 / 下站</div><div class="tdetail" id="tdetail-' + tk + '"></div></div></div>';
+});
+$("#trails").innerHTML = html;
+var branch = document.createElement("div");
+var ytr = TRAILS["yin"];
+var yOpen = !!state.openTrails["yin"];
+var yAll = ISSUES.filter(function (i) { return i.trail === "yin";}).length;
+var yVis = ISSUES.filter(function (i) { return i.trail === "yin" && inDate(i);}).length;
+var yOpenN = ISSUES.filter(function (i) { return i.trail === "yin" && i.status !== "已闭环";}).length;
+var yinHtml = '<div class="trail-acc"><button type="button" class="trail-toggle" data-acc="yin" aria-expanded="' + yOpen + '">' +
+'<span class="trail-name">' + esc(ytr.name) + '<span class="lvl">' + esc(ytr.level) + '</span></span>' +
+'<span class="trail-counts">所选时段 ' + yVis + " 件 · 历史共 " + yAll + " 件" + (yOpenN? ' · <b>未闭环 ' + yOpenN + "</b>": "") + '</span>' +
+'<span class="chev" aria-hidden="true">›</span></button>' +
+'<div class="trail-meta" style="margin:4px 2px 0">' + esc(ytr.meta) + "</div>" +
+'<div class="trail-body"' + (yOpen? "": " hidden") + ">";
+segsFor("yin").forEach(function (sg) {
+var list = segIssues("yin", sg.id, true);
+var allN = segIssues("yin", sg.id, false).length;
+var openN = list.filter(function (i) { return i.status!== "已闭环";}).length;
+var n = list.length;
+var heat = n === 0? 0: n === 1? 1: n === 2? 2: 3;
+yinHtml += '<button class="seg h' + heat + '" data-trail="yin" data-seg="' + esc(sg.id) + '" aria-pressed="' + (state.trail === "yin" && state.seg === sg.id) + '">' +
+'<span class="seg-top"><span class="seg-name">' + esc(sg.id === "full"? "青云咖啡厅引线": sg.name) + '</span>' +
+(sg.id === "full"? '<span class="tag">连接道</span>': '<span class="tag">新设段位</span>') +
+(allN >= 2? '<span class="tag repeat">反复出现</span>': "") +
+(openN > 0? '<span class="tag openct">未闭环 ' + openN + "</span>": "") +
+'<span class="cnt ' + (n === 0? "": n === 1? "n1": n === 2? "n2": "n3") + '">' + n + "</span></span>" +
+'<span class="seg-note">' + esc(sg.note) + " · 历史共 " + allN + " 件</span></button>";
+});
+yinHtml += '<div class="tdetail" id="tdetail-yin"></div></div></div>';
+branch.innerHTML = yinHtml;
+$("#trails").appendChild(branch);
+$$("#trails .trail-toggle").forEach(function (b) {
+b.addEventListener("click", function () {
+var k = b.getAttribute("data-acc");
+state.openTrails[k] = !state.openTrails[k];
+renderMap(); renderDetail();
+});
+});
+$$("#trails .seg, #trails .ribbon").forEach(function (b) {
+b.addEventListener("click", function () {
+var tk = b.getAttribute("data-trail"), sg = b.getAttribute("data-seg");
+if (state.trail === tk && state.seg === sg) {
+/* 再点一次当前选中的段位：收起详情，取消选中 */
+state.trail = null; state.seg = null;
+renderMap(); renderDetail(); renderTable();
+return;
+}
+state.trail = tk; state.seg = sg;
+state.openTrails[state.trail] = true;
+renderMap(); renderDetail(); renderTable();
+var td = document.getElementById("tdetail-" + state.trail);
+if (td) td.scrollIntoView({ block: "nearest", behavior: "smooth"});
+});
+});
+}
+
+function renderDetail() {
+if (!state.trail || !TRAILS[state.trail]) return;
+var tr = TRAILS[state.trail];
+var list = segIssues(state.trail, state.seg, true).slice().sort(function (a, b) { return a.id - b.id;});
+var allN = segIssues(state.trail, state.seg, false).length;
+var segName = segLabel(state.seg);
+var h = '<div class="detail-title">' + esc(tr.name) + " · " + esc(segName) + "</div>" +
+'<div class="detail-sub">' + (state.date === "all"? "全部时段": fmtDate(state.date) + " · " + weekday(state.date)) + " 共 " + list.length + " 件 · 该段历史累计 " + allN + " 件</div>";
+if (!list.length) {
+h += '<div class="empty"><b>该段在所选时段无问题记录。</b><br>巡查仍按常规频次通过，重点看雪面硬化和雪层厚度变化。</div>';
+} else {
+list.forEach(function (it) {
+h += '<div class="issue"><div class="i-top"><span>' + fmtDateTime(it) + " · 上报人 " + (it.reporter? esc(it.reporter): "未记录（历史台账）") + '</span>' +
+'<span class="pill type">' + esc(it.type) + '</span><span class="pill lvl">' + esc(it.level) + '</span>' +
+(it.needGroom? '<span class="pill groom">需夜间压雪</span>': "") +
+'<span class="pill ' + statusClass(it.status) + '">' + esc(it.status) + '</span></div>' +
+'<div class="desc">' + esc(it.desc) + '</div>' +
+'<div class="act"><b>处置（' + esc(it.team || "待分派") + (it.owner? " " + esc(it.owner): "") + "）：</b>" + esc(it.action || "待定") + "</div>" +
+rectLineHtml(it) +
+(it.status === "已闭环"? ""
+: '<div class="rect-form"><button type="button" class="rect-toggle" data-rect-toggle="' + it.id + '" aria-expanded="' + (rectOpen[it.id] !== false) + '"><span>整改登记 <span class="rf-sub">四项必填 · 按巡逻队台账</span></span><span class="chev" aria-hidden="true">›</span></button>' +
+'<div class="rect-body" id="rectBody-' + it.id + '"' + (rectOpen[it.id] === false? " hidden": "") + '>' +
+'<div class="rect-grid">' +
+'<div class="field"><label for="rectBy-' + it.id + '">整改人姓名（必填）</label><input id="rectBy-' + it.id + '" type="text" placeholder="例：张斌" /></div>' +
+'<div class="field"><label for="rectTime-' + it.id + '">巡查时间（必填）</label><input id="rectTime-' + it.id + '" type="datetime-local" value="' + nowDateTimeLocal() + '" /></div>' +
+'<div class="field"><label for="rectResult-' + it.id + '">整改后结果（必填）</label><select id="rectResult-' + it.id + '"><option value="">请选择：合格 / 未完成</option><option value="合格">合格</option><option value="未完成">未完成</option></select></div>' +
+'<div class="field wide2"><label for="rectDetail-' + it.id + '">具体情况（必填）</label><textarea id="rectDetail-' + it.id + '" placeholder="例：已翻雪破壳并压实，复查雪面平整；或：冰壳未清完，还需今晚再压一遍"></textarea></div>' +
+'</div>' +
+'<div class="stbtns"><button class="stbtn primary" data-rect="' + it.id + '" type="button">提交整改记录</button></div>' +
+'<div class="meta">选「合格」提交后闭环；选「未完成」退回继续整改，这次记录照样留档。</div></div></div>') +
+"</div>";
+});
+}
+if (state.trail === "qingyun" && state.seg === "mid") {
+h += '<div class="insight" style="margin-top:4px"><b>复发提醒：</b>这段 11/12、11/13 连续两天出冰壳（挑战者上方靠山侧、老 E20 石头崖子）。今晚压雪重点翻这一段，明早巡查第一站先看这里。</div>';
+}
+var target = document.getElementById("tdetail-" + state.trail);
+if (!target) return;
+target.innerHTML = h;
+$$('input[id^="rectTime-"]', target).forEach(function (el) {
+el.value = nowDateTimeLocal();
+el.addEventListener("input", function () { el.setAttribute("data-manual", "1");});
+el.addEventListener("change", function () { el.setAttribute("data-manual", "1");});
+});
+$$("[data-rect-toggle]", target).forEach(function (b) {
+b.addEventListener("click", function () {
+var id = b.getAttribute("data-rect-toggle");
+var open = b.getAttribute("aria-expanded") === "true";
+rectOpen[id] = !open;
+b.setAttribute("aria-expanded", String(!open));
+var body = document.getElementById("rectBody-" + id);
+if (body) body.hidden = open;
+});
+});
+$$("[data-rect]", target).forEach(function (b) {
+b.addEventListener("click", function () {
+var id = +b.getAttribute("data-rect");
+var byEl = document.getElementById("rectBy-" + id);
+var timeEl = document.getElementById("rectTime-" + id);
+var resEl = document.getElementById("rectResult-" + id);
+var detEl = document.getElementById("rectDetail-" + id);
+if (timeEl && timeEl.getAttribute("data-manual") !== "1") timeEl.value = nowDateTimeLocal();
+var by = byEl? byEl.value.trim(): "";
+var dt = timeEl? timeEl.value: "";
+var res = resEl? resEl.value: "";
+var det = detEl? detEl.value.trim(): "";
+if (!by) { toast("整改登记必填：先填整改人姓名"); if (byEl) byEl.focus(); return;}
+if (!dt) { toast("整改登记必填：选一下巡查时间"); if (timeEl) timeEl.focus(); return;}
+if (!res) { toast("整改登记必填：选整改后结果——合格还是未完成"); if (resEl) resEl.focus(); return;}
+if (!det) { toast("整改登记必填：写清具体情况"); if (detEl) detEl.focus(); return;}
+b.disabled = true; b.textContent = "同步中…";
+submitRectification(id, { by: by, datetime: dt, result: res, detail: det}).catch(function () {});
+});
+});
+}
+
+function groomList() {
+return ISSUES.filter(function (i) { return i.needGroom && i.status!== "已闭环";})
+.sort(function (a, b) { return a.date < b.date? -1: a.date > b.date? 1: a.id - b.id;});
+}
+function renderTasks() {
+var list = groomList();
+$("#taskDateLab").textContent = "（" + fmtDate(todayStr()) + " 夜间 · 全部未闭环汇总）";
+if (!list.length) {
+$("#taskList").innerHTML = '<div class="empty"><b>今晚没有待压雪的问题。</b><br>按常规全线压雪即可；青云中段仍建议多过一遍。</div>';
+} else {
+$("#taskList").innerHTML = list.map(function (it, ix) {
+return '<div class="task"><div class="no">' + (ix + 1) + '</div><div><div class="t-main">' +
+esc(TRAILS[it.trail].name) + " · " + esc(segLabel(it.seg)) + "：" + esc(it.action || it.desc) + '</div>' +
+'<div class="t-sub">问题：' + esc(it.desc) + "（" + esc(it.type) + " · " + esc(it.level) + "）｜" + fmtDateTime(it) + "发现 · 上报人 " + esc(it.reporter || "未记录") + " · 当前状态 " + esc(it.status) + "｜" + esc(it.team) + (it.owner? " " + esc(it.owner): "") + "</div></div></div>";
+}).join("");
+}
+var agg = {};
+ISSUES.forEach(function (i) {
+var k = i.trail + "|" + i.seg;
+if (!agg[k]) agg[k] = { trail: i.trail, seg: i.seg, n: 0, dates: {}, types: {}};
+agg[k].n++; agg[k].dates[i.date] = 1; agg[k].types[i.type] = 1;
+});
+var rows = Object.keys(agg).map(function (k) { return agg[k];}).sort(function (a, b) { return b.n - a.n;});
+$("#focusList").innerHTML = rows.map(function (r, ix) {
+var days = Object.keys(r.dates).length;
+return '<div class="focus-row"><div class="rank">' + (ix + 1) + '</div><div><div class="f-main">' +
+esc(TRAILS[r.trail].name) + " · " + esc(segLabel(r.seg)) + " — 累计 " + r.n + " 件" +
+(days >= 2? ' <span class="tag repeat">连续 ' + days + " 天出现</span>": "") + '</div>' +
+'<div class="f-sub">主要问题：' + esc(Object.keys(r.types).join("、")) + "｜巡查提示：" + focusTip(r) + "</div></div></div>";
+}).join("");
+function focusTip(r) {
+if (r.trail === "qingyun" && r.seg === "mid") return "降速细看靠山侧与石头崖子，摸雪面硬度";
+if (r.trail === "xingguang" && r.seg === "upper") return "试刹车感，查冰疙瘩是否复现";
+if (r.trail === "xingguang" && r.seg === "entry") return "看下站雪层厚度，人流大时段加看一次";
+if (r.seg === "full") return "整线巡一遍，重点看向阳返软段";
+return "常规细看雪面平整度";
+}
+}
+
+function bars(el, rows, hotFn) {
+var max = Math.max.apply(null, rows.map(function (r) { return r.v;}).concat([1]));
+$(el).innerHTML = rows.map(function (r) {
+return '<div class="bar-row"><span class="bl" title="' + esc(r.k) + '">' + esc(r.k) + '</span>' +
+'<span class="bar-track"><span class="bar-fill ' + (hotFn && hotFn(r)? "hot": "") + '" style="display:block;width:' + Math.round(r.v / max * 100) + '%"></span></span>' +
+'<span class="bv">' + r.v + "</span></div>";
+}).join("");
+}
+function renderHistory() {
+function countBy(fn) {
+var m = {};
+ISSUES.forEach(function (i) { var k = fn(i); m[k] = (m[k] || 0) + 1;});
+return Object.keys(m).map(function (k) { return { k: k, v: m[k]};}).sort(function (a, b) { return b.v - a.v;});
+}
+bars("#histTrail", countBy(function (i) { return TRAILS[i.trail].name.replace("D14 ", "");}), function (r) { return r.v >= 3;});
+bars("#histSeg", countBy(function (i) { return TRAILS[i.trail].name.replace("D14 ", "").replace("大道", "") + "·" + segLabel(i.seg);}), function (r) { return r.v >= 2;});
+bars("#histType", countBy(function (i) { return i.type;}), function (r) { return r.v >= 4;});
+}
+
+function renderTable() {
+var vis = ISSUES.filter(inDate).slice().sort(function (a, b) { return a.id - b.id;});
+$("#tbody").innerHTML = vis.map(function (it) {
+var sel = state.trail === it.trail && state.seg === it.seg;
+return '<tr data-id="' + it.id + '" data-sel="' + sel + '"><td>' + it.id + "</td><td>" + fmtDateTime(it) + "</td><td>" + esc(it.reporter || "未记录") + "</td><td>" +
+esc(TRAILS[it.trail].name) + "</td><td>" + esc(segLabel(it.seg)) + "</td><td>" + esc(it.desc) + "</td><td>" +
+esc(it.type) + "</td><td>" + esc(it.level) + "</td><td>" + esc((it.team || "") + (it.owner? " " + it.owner: "") + "：" + (it.action || "")) + "</td><td>" +
+(it.needGroom? "是": "否") + '</td><td><span class="pill ' + statusClass(it.status) + '">' + esc(it.status) + "</span></td><td>" +
+esc(rectSummary(it)) + "</td></tr>";
+}).join("") || '<tr><td colspan="12" style="text-align:center;color:var(--ink2)">所选日期暂无记录</td></tr>';
+$("#cards").innerHTML = vis.map(function (it) {
+return '<div class="issue-card" data-id="' + it.id + '"><div class="i-top" style="display:flex;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2)"><span>' +
+fmtDateTime(it) + " · " + esc(TRAILS[it.trail].name) + " · " + esc(segLabel(it.seg)) + " · 上报人 " + esc(it.reporter || "未记录") + '</span><span class="pill ' + statusClass(it.status) + '">' + esc(it.status) + '</span>' +
+(it.needGroom? '<span class="pill groom">需夜间压雪</span>': "") + '</div>' +
+'<div style="font-weight:700;margin:5px 0 3px">' + esc(it.desc) + '</div>' +
+'<div style="font-size:13px">处置：' + esc((it.team || "") + (it.owner? " " + it.owner: "") + "：" + (it.action || "")) + '</div>' +
+'<div style="font-size:12.5px;color:var(--ink2);margin-top:4px">' + esc(it.type) + " · " + esc(it.level) + " · 整改 " + esc(rectSummary(it)) + "</div></div>";
+}).join("") || '<div class="empty">所选日期暂无记录</div>';
+$$("#tbody tr[data-id], #cards .issue-card").forEach(function (row) {
+row.addEventListener("click", function () {
+var it = ISSUES.filter(function (x) { return x.id === +row.getAttribute("data-id");})[0];
+if (it) { state.trail = it.trail; state.seg = it.seg; state.openTrails[it.trail] = true; showView("home"); renderAll(); var td = document.getElementById("tdetail-" + it.trail); if (td) td.scrollIntoView({ block: "center", behavior: "smooth"});}
+});
+});
+}
+
+function renderAll() { ensureTrailsFromIssues(); renderChips(); renderKpis(); renderHomeKpis(); renderMap(); renderDetail(); renderTasks(); renderHistory(); renderTable(); fillTrailOptions(); if (!manualLocked) fillSegOptions($("#fTrail").value); renderParsePreview();}
+
+function showView(v) {
+$("#homeView").hidden = v !== "home";
+$("#detailView").hidden = v !== "detail";
+window.scrollTo(0, 0);
+}
+function renderHomeKpis() {
+var n = ISSUES.filter(inDate).length;
+$("#hkTodayNum").textContent = n + " 件";
+var lab = $("#hkTodayLab");
+if (lab) lab.textContent = state.date === "all"? "全部问题（所有日期）": state.date === todayStr()? "今日问题": fmtDate(state.date) + " · " + weekday(state.date) + " 的问题";
+}
+$("#hkOpen").addEventListener("click", function () {
+var el = $("#trails"); if (el) el.scrollIntoView({ behavior: "smooth"});
+});
+$("#hkToday").addEventListener("click", function () {
+var el = $("#trails"); if (el) el.scrollIntoView({ behavior: "smooth"});
+});
+$("#goDetail").addEventListener("click", function () { showView("detail");});
+$("#backHome").addEventListener("click", function () { showView("home");});
+
+$("#refreshBtn").addEventListener("click", function () { refresh(true); toast("已刷新到最新数据");});
+document.addEventListener("visibilitychange", function () { if (!document.hidden) refresh(false);});
+setInterval(function () { if (!document.hidden) refresh(false);}, 60000);
+
+$("#copyTasks").addEventListener("click", function () {
+var list = groomList();
+var lines = [""];
+if (!list.length) lines.push("今晚没有待压雪的问题，按常规全线压雪；青云中段建议多过一遍。");
+list.forEach(function (it, ix) {
+lines.push((ix + 1) + ". " + TRAILS[it.trail].name + "·" + segLabel(it.seg) + "：" + (it.action || it.desc) + "（问题：" + it.desc + "；" + it.type + "·" + it.level + "；" + fmtDateTime(it) + "发现，上报人 " + (it.reporter || "未记录") + "）— " + it.team + (it.owner? " " + it.owner: ""));
+});
+lines.push("处理完在质检图页面填整改登记：人名、巡查时间、结果（合格 / 未完成）、具体情况——选合格才闭环，未完成继续整改。");
+copyText(lines.join("\n"), "今晚作业单已复制，去微信群粘贴发给司机即可");
+});
+
+var lastNew = null;
+$("#addBtn").addEventListener("click", function () {
+var reporter = $("#fReporter").value.trim();
+if (!reporter) { toast("先填上报人姓名：这是唯一必填项，每条记录都要带姓名"); $("#fReporter").focus(); return;}
+var desc = $("#fTalk").value.trim();
+if (!desc) { toast("再用一句话说清问题：什么问题、在哪、建议怎么处理"); $("#fTalk").focus(); return;}
+var p = lastParse || parseDescription(desc);
+var trail = $("#fTrail").value, seg = $("#fSeg").value;
+if (!manualLocked) { trail = p.trail; seg = p.seg;}
+/* 新雪道 / 新段位：提交前先在本页建档，提交后随记录同步给所有人 */
+if (p.trailNew || p.trailPending) registerTrail(p.trail, p.trailPending? "待归位雪道": p.trailName);
+if (p.segNew) registerSeg(trail, p.segName);
+var ftime = $("#fTime").value;
+if (!ftime) { ftime = nowHHMM(); $("#fTime").value = ftime;}
+var btn = $("#addBtn"); btn.disabled = true; btn.textContent = "正在同步…";
+var rec = {
+date: todayStr(), time: ftime, trail: trail, seg: seg,
+desc: desc, type: $("#fType").value, level: $("#fLevel").value,
+affects: p.level === "Ⅰ级"? "是": "否", status: "待分派",
+done: "", review: "", reviewer: "",
+team: $("#fTeam").value, owner: $("#fOwner").value.trim(),
+action: $("#fAction").value.trim() || p.action || "待分派处置",
+needGroom: $("#fGroom").value === "yes",
+reporter: reporter
+};
+rec.note = "责任：" + rec.team + (rec.owner? " " + rec.owner: "") + "，" + rec.action + "｜来源：一句话上报（" + rec.reporter + "） " + rec.date + " " + rec.time;
+submitIssue(rec).then(function (created) {
+lastNew = created;
+state.date = todayStr(); state.trail = created.trail; state.seg = created.seg; state.openTrails[created.trail] = true;
+$("#copyNew").disabled = false;
+$("#fTalk").value = ""; $("#fAction").value = "";
+manualLocked = false;
+$("#fTime").value = nowHHMM();
+renderAll();
+}).catch(function () {}).then(function () {
+btn.disabled = false; btn.textContent = "提交上报（同步到所有人）";
+});
+});
+$("#fTalk").addEventListener("input", renderParsePreview);
+$$(".ex-chip").forEach(function (b) {
+b.addEventListener("click", function () {
+$("#fTalk").value = b.getAttribute("data-ex");
+manualLocked = false;
+renderParsePreview();
+$("#fTalk").focus();
+});
+});
+["fTrail", "fType", "fLevel", "fGroom", "fTeam"].forEach(function (id) {
+$("#" + id).addEventListener("change", function () { manualLocked = true; renderParsePreview();});
+});
+$("#reparseBtn").addEventListener("click", function () {
+manualLocked = false;
+$("#fAction").value = "";
+renderParsePreview();
+toast("已按描述重新识别");
+});
+$("#copyNew").addEventListener("click", function () {
+if (!lastNew) return;
+var it = lastNew;
+var line = [it.date + (it.time? " " + it.time: ""), TRAILS[it.trail].name, TRAILS[it.trail].level, segLabel(it.seg), it.desc, it.type, it.level, it.affects, it.status, "上报人：" + (it.reporter || "未记录"), "建议处置：" + it.action].join(" | ");
+copyText(line, "已复制为台账行文字");
+});
+$("#fTrail").addEventListener("change", function () {
+fillSegOptions(this.value);
+});
+$("#fSeg").addEventListener("change", function () { manualLocked = true; renderParsePreview();});
+
+/* 首屏先渲染内置快照，随即拉 Supabase 共享数据覆盖，并订阅实时推送；发现时间默认填当前时间 */
+$("#fTime").value = nowHHMM();
+fillTrailOptions("qingyun");
+fillSegOptions("qingyun", "mid");
+renderAll();
+refresh(false);
+setupRealtime();
+</script>
+</body>
+</html>
