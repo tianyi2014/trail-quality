@@ -1150,19 +1150,21 @@ return recs;
 function historyHtml(it) {
 var evs = [];
 var reps = parseReportLogRecords(it.note);
-if (reps.length) reps.forEach(function (r) { evs.push({ label: "上报", by: r.by, time: r.time, text: r.detail }); });
-else evs.push({ label: "上报", by: it.reporter || "", time: (it.date || "") + (it.time? " " + String(it.time).slice(0, 5): ""), text: "上报问题，状态「待分派」" + (it.pinLat != null? "，落图钉 " + fmtPin(it): "") });
+if (reps.length) reps.forEach(function (r) { evs.push({ label: "上报", by: r.by, time: r.time, text: r.detail, isMod: false }); });
+else evs.push({ label: "上报", by: it.reporter || "", time: (it.date || "") + (it.time? " " + String(it.time).slice(0, 5): ""), text: "上报问题，状态「待分派」" + (it.pinLat != null? "，落图钉 " + fmtPin(it): ""), isMod: false });
 String(it.note || "").split("｜").forEach(function (seg) {
 var m;
-if ((m = seg.match(/^处理记录：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)\s+方式(.+?)\s+结果(已处理|未完成)：([\s\S]*)$/))) evs.push({ label: "压雪车处理登记", by: m[1], time: m[2], text: "处理方式：" + m[3] + "，结果：" + m[4] + (m[5]? "，" + m[5]: "") });
-else if ((m = seg.match(/^复查记录：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)\s+结论(合格|不合格|未完成)：([\s\S]*)$/))) evs.push({ label: "复查登记", by: m[1], time: m[2], text: "结论：" + m[3] + (m[4]? "，" + m[4]: "") });
-else if ((m = seg.match(/^整改记录：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)\s+结果(合格|未完成)：([\s\S]*)$/))) evs.push({ label: "整改登记（旧）", by: m[1], time: m[2], text: "结果：" + m[3] + (m[4]? "，" + m[4]: "") });
-else if ((m = seg.match(/^重新打开：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)[：:]([\s\S]*)$/))) evs.push({ label: "重新打开", by: m[1], time: m[2], text: m[3] });
-else if ((m = seg.match(/^问题更正：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)[：:]([\s\S]*)$/))) evs.push({ label: "更正问题内容", by: m[1], time: m[2], text: m[3] });
-else if ((m = seg.match(/^图钉修改：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)[：:]([\s\S]*)$/))) evs.push({ label: "改图钉位置", by: m[1], time: m[2], text: m[3] });
-else if ((m = seg.match(/^状态变更：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)[：:]([\s\S]*)$/))) evs.push({ label: "状态变更", by: m[1], time: m[2], text: m[3] });
+if ((m = seg.match(/^处理记录：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)\s+方式(.+?)\s+结果(已处理|未完成)：([\s\S]*)$/))) evs.push({ label: "压雪车处理登记", by: m[1], time: m[2], text: "处理方式：" + m[3] + "，结果：" + m[4] + (m[5]? "，" + m[5]: ""), isMod: true });
+else if ((m = seg.match(/^复查记录：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)\s+结论(合格|不合格|未完成)：([\s\S]*)$/))) evs.push({ label: "复查登记", by: m[1], time: m[2], text: "结论：" + m[3] + (m[4]? "，" + m[4]: ""), isMod: true });
+else if ((m = seg.match(/^整改记录：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)\s+结果(合格|未完成)：([\s\S]*)$/))) evs.push({ label: "整改登记（旧）", by: m[1], time: m[2], text: "结果：" + m[3] + (m[4]? "，" + m[4]: ""), isMod: true });
+else if ((m = seg.match(/^重新打开：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)[：:]([\s\S]*)$/))) evs.push({ label: "重新打开", by: m[1], time: m[2], text: m[3], isMod: true });
+else if ((m = seg.match(/^问题更正：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)[：:]([\s\S]*)$/))) evs.push({ label: "更正问题内容", by: m[1], time: m[2], text: m[3], isMod: true });
+else if ((m = seg.match(/^图钉修改：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)[：:]([\s\S]*)$/))) { var pinIsMod = !/^\s*落图钉/.test(m[3]); evs.push({ label: pinIsMod? "改图钉位置": "落图钉", by: m[1], time: m[2], text: m[3], isMod: pinIsMod }); }
+else if ((m = seg.match(/^状态变更：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)[：:]([\s\S]*)$/))) evs.push({ label: "状态变更", by: m[1], time: m[2], text: m[3], isMod: true });
 });
-if (!evs.length) return "";
+/* 只有上报之后发生过修改才显示整个区块：首次上报与首次落钉不算修改、不触发显示；
+   没有任何后续修改时完全不显示（不留标题、不留占位文字） */
+if (!evs.some(function (e) { return e.isMod; })) return "";
 return '<div class="rect-rec"><div class="rr-line"><b>修改历史（全部留档）</b></div>' + evs.map(function (e) {
 return '<div class="rr-line">' + esc(e.label) + "：<b>" + esc(e.by || "未记录") + "</b> · " + esc(fmtRectTime(e.time)) + (e.text? " · " + esc(e.text): "") + "</div>";
 }).join("") + "</div>";
