@@ -60,6 +60,14 @@ h3{font-size:15px;font-weight:700;margin:0}
 .offline-banner[hidden]{display:none}
 .offline-banner b{color:var(--red);font-weight:900}
 .offline-banner .btn{margin-left:auto;flex:none}
+.queue-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-radius:var(--radius);padding:11px 14px;margin:14px 0 0;font-size:14px;border:1.5px solid var(--amber);background:var(--amber-soft);color:var(--ink)}
+.queue-bar[hidden]{display:none}
+.queue-bar.ok{border-color:var(--teal);background:var(--teal-soft)}
+.queue-bar.conflict{border-color:var(--red);background:var(--red-soft)}
+.queue-bar b{font-weight:900}
+.queue-bar .btn{margin-left:auto;flex:none}
+.queue-conf-item{flex-basis:100%;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px dashed var(--line2);padding-top:8px;font-size:13.5px}
+.queue-conf-item .btn{margin-left:auto}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--teal);flex:none}
 /* KPI */
 .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:16px 0 6px}
@@ -197,6 +205,16 @@ section{margin-top:26px}
 .focus-row .f-sub{font-size:13px;color:var(--ink2)}
 .btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 14px;font-weight:700;font-size:13.5px;min-height:40px}
 .btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.closed-direct{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn.groom-direct{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.submit-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.submit-actions .btn{justify-content:center;text-align:center;padding:12px 14px;font-size:14.5px;line-height:1.35;min-height:52px}
+.submit-actions .btn small{display:block;font-size:12px;font-weight:500;opacity:.85;margin-top:2px}
+.onsite-field{margin-top:12px}
+.onsite-field textarea{width:100%;border:1.5px solid var(--teal);border-radius:10px;padding:10px 12px;background:var(--surface);color:var(--ink);font:inherit;font-size:14.5px;line-height:1.55;min-height:64px;resize:vertical}
+.onsite-field textarea:focus{outline:2.5px solid var(--teal);outline-offset:1px}
+.onsite-field .onsite-hint{font-size:12.5px;color:var(--ink2);margin-top:4px}
+@media (max-width:560px){.submit-actions{grid-template-columns:1fr}}
 .btn:active{transform:translateY(1px)}
 .btn:disabled{opacity:.5;cursor:wait}
 .btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
@@ -311,10 +329,15 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink3);border-top:1px solid v
 .gps-head .hint{font-size:12.5px;color:var(--ink2)}
 .gps-head .sp{flex:1}
 #gpsMap{height:440px;border-radius:10px;border:1px solid var(--line2);background:#d4edcf;z-index:0}
+.gps-map-wrap{position:relative}
+.pin-mapbar{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:1001;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;background:var(--surface);border:1.5px solid var(--blue);border-radius:12px;box-shadow:var(--shadow);padding:8px 10px;max-width:calc(100% - 20px)}
+.pin-mapbar[hidden]{display:none}
+.pin-mapbar .pin-map-status{font-size:13px;color:var(--ink2);flex-basis:100%;text-align:center}
+.pin-mapbar .pin-map-status b{color:var(--blue)}
 /* 底图瓦片染浅绿：与实测图（Meta 地图浅色样式，陆地 #d4edcf）一致的浅绿底；
    滤镜只加在瓦片 <img> 上，雪道面、索道线、图钉在其它图层，不受影响。
-   瓦片源已换成免密钥的 OpenStreetMap（彩色瓦片），滤镜改为柔和降饱和 + 轻微偏绿，
-   避免旧 CARTO 灰度瓦片的强染色把 OSM 的水系、道路颜色推偏 */
+   瓦片为自托管的 OpenStreetMap 瓦片（assets/tiles/，只含北大湖一带），
+   滤镜改为柔和降饱和 + 轻微偏绿，避免强染色把 OSM 的水系、道路颜色推偏 */
 #gpsMap .gps-base-tiles{filter:saturate(.62) brightness(1.06) sepia(.18) hue-rotate(15deg) contrast(.97)}
 .leaflet-control-attribution{background:rgba(255,255,255,.55)!important;color:#6b7a72!important;font-size:9px!important;line-height:1.4;padding:0 4px}
 .leaflet-control-attribution a{color:#6b7a72!important}
@@ -326,6 +349,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink3);border-top:1px solid v
 .gpin{display:block;width:17px;height:17px;border-radius:50% 50% 50% 6px;transform:rotate(-45deg);border:2.5px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.5)}
 .gpin.st-lvl1{background:#c62f2f}.gpin.st-lvl23{background:#e0a400}.gpin.st-closed{background:#1e8e4f}
 .gpin.draft{background:#1663b8;animation:vpulse 1.4s ease-in-out infinite}
+.gpin.confirmed{background:#1e8e4f}
 .me-dot{display:block;width:15px;height:15px;border-radius:50%;background:#2f7fe0;border:3px solid #fff;box-shadow:0 0 0 2px rgba(47,127,224,.55),0 1px 5px rgba(0,0,0,.4)}
 .leaflet-popup-content{font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;font-size:13.5px;line-height:1.55;margin:11px 13px}
 .pin-pop .pp-desc{font-weight:700;font-size:14.5px;margin:3px 0}
@@ -366,6 +390,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink3);border-top:1px solid v
 <body>
 <div class="wrap">
 <div class="offline-banner" id="offlineBanner" hidden><span><b>离线数据</b>：暂时连不上共享数据，下面显示的是内置旧快照，不是最新数据。联网后会自动更新，也可以点右边按钮重试。</span><button class="btn" id="offlineRetry" type="button">↻ 立即重试</button></div>
+<div class="queue-bar" id="queueBar" hidden></div>
 <div id="homeView">
 <div class="topbar">
 <div>
@@ -373,6 +398,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink3);border-top:1px solid v
 </div>
 <div class="badges">
 <span class="open-badge"><span class="dot"></span>当前开放：星光大道 · D14 青云大道</span>
+<span class="sync-badge" id="queueBadge" hidden><span class="dot" style="background:var(--amber)"></span><span id="queueBadgeText"></span></span>
 </div>
 </div>
 
@@ -388,8 +414,11 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink3);border-top:1px solid v
 
 <div class="panel gps-panel" aria-label="GPS 实测图与问题图钉">
 <div class="gps-head"><h2>GPS 实测图 · 问题图钉</h2><span class="hint">绿＝已闭环 · 红＝Ⅰ级未闭环 · 黄＝Ⅱ/Ⅲ级未闭环</span><span class="sp"></span><button class="btn" id="locateMeBtn" type="button">定位我</button></div>
-<div class="pin-armbar" id="pinArmBar" hidden><span id="pinArmText"></span><button class="btn primary" id="pinArmSave" type="button" hidden>保存新位置</button><button class="btn" id="pinArmCancel" type="button">取消</button></div>
+<div class="pin-armbar" id="pinArmBar" hidden><span id="pinArmText"></span><button class="btn primary" id="pinArmSave" type="button" hidden>确认并保存新位置</button><button class="btn" id="pinArmCancel" type="button">取消</button></div>
+<div class="gps-map-wrap">
 <div id="gpsMap" role="application" aria-label="北大湖 GPS 实测地图"></div>
+<div class="pin-mapbar" id="pinMapBar" hidden><span class="pin-map-status" id="pinMapStatus"></span><button class="btn primary" id="confirmPinBtn" type="button" hidden>确认这个位置</button><button class="btn" id="redoPinBtn" type="button" hidden>重新选位置</button></div>
+</div>
 <div class="gps-fallback" id="gpsFallback" hidden>GPS 地图没能加载（可能暂时没网）。图钉定位和查看先用不了，上报、台账、作业单照常使用。<div class="btnrow" style="justify-content:center"><button class="btn" id="gpsRetry" type="button">↻ 重新加载地图</button></div></div>
 </div>
 
@@ -412,14 +441,12 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink3);border-top:1px solid v
 <div class="parse-chips" id="parseChips"></div>
 <div class="parse-act" id="parseAct"></div>
 </div>
-<div class="field sev-field"><label for="fLevelTop">严重等级（巡逻队手动选 · 系统按描述预选，可改）</label>
+<div class="field sev-field"><label for="fLevelTop">严重等级</label>
 <select id="fLevelTop"><option value="Ⅲ级">Ⅲ级 · 一般</option><option value="Ⅱ级">Ⅱ级 · 较重</option><option value="Ⅰ级">Ⅰ级 · 严重</option></select></div>
 <div class="locate-box" id="locateBox">
-<div class="locate-head">定位图钉 <span class="rf-sub">必填</span></div>
-<div class="locate-status">先填好上报人姓名才能落钉（防误碰）。点下面按钮，就会按你现在的位置（GPS）自动在地图上落钉，不用再去地图上点选；落下后可以在地图上拖动图钉微调。地图右上角「定位我」只定位、显示你在哪，不落钉。</div>
-<div class="locate-status" id="locateStatus" hidden></div>
+<div class="locate-head">定位图钉 <span class="rf-sub">必填 · 手动落钉，确认后才锁定</span></div>
 <div class="btnrow">
-<button class="btn" id="armPinBtn" type="button">按我现在的位置落图钉</button>
+<button class="btn" id="armPinBtn" type="button">到地图上落图钉</button>
 </div>
 </div>
 <div class="field" style="margin-top:12px"><label for="fMedia">留证照片/视频（可不传）</label>
@@ -468,9 +495,11 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink3);border-top:1px solid v
 </div>
 <div class="reparse-row"><button class="btn" id="reparseBtn" type="button">重新按描述识别</button><span class="hint" id="manualHint">手动改过后将不再跟随描述自动变化，点此可恢复自动识别。</span></div>
 </details>
-<div class="btnrow">
-<button class="btn primary" id="addBtn">提交上报（同步到所有人）</button>
+<div class="submit-actions">
+<button class="btn closed-direct" id="addClosedBtn" type="button">现场已处理</button>
+<button class="btn groom-direct" id="addBtn" type="button">待处理</button>
 </div>
+<div class="form-note">两条选一条提交：现场处理完了点「现场已处理」；还没处理点「待处理」。</div>
 
 </div>
 </section>
@@ -992,6 +1021,175 @@ function updateOfflineBanner() {
 var b = $("#offlineBanner");
 if (b) b.hidden = !usingSeedFallback;
 }
+/* ===== 离线登记队列（山上信号弱 / 没网时先存本机，有网自动上传）=====
+   没网时提交的新上报、状态变更、处理 / 复查登记、改图钉、归位，先整条存进本机
+   浏览器（IndexedDB，能连照片 / 视频文件一起存），页面顶部显示「待上传 X 条」；
+   一有网（online 事件、刷新拉取成功、每 30 秒巡检、手动点「立即上传」）就按
+   提交顺序逐条上传，传完显示「已同步」。
+   改已有记录的离线提交带提交那一刻的版本 guard（note / status）：上传时若库里
+   这条已被别人改过，guard 匹配 0 行 → 标成「冲突」留在队列区展示，绝不硬盖；
+   冲突条由本人看清后手动丢弃，库里以别人的新版本为准。
+   新上报离线时先在本机用负数临时 id 显示（_offline 标记），上传成功后换成库里的真实记录。 */
+var OQ_DB = "tq-offline-queue", OQ_STORE = "queue";
+var oqItems = [];
+var oqReady = false;
+var oqProcessing = false;
+var oqShowSynced = false;
+function oqOpen() {
+return new Promise(function (res, rej) {
+if (!("indexedDB" in window)) { rej(new Error("noidb")); return;}
+var rq = indexedDB.open(OQ_DB, 1);
+rq.onupgradeneeded = function () { rq.result.createObjectStore(OQ_STORE, { keyPath: "qid" }); };
+rq.onsuccess = function () { res(rq.result); };
+rq.onerror = function () { rej(rq.error); };
+});
+}
+function oqLoad() {
+return oqOpen().then(function (db) {
+return new Promise(function (res, rej) {
+var rq = db.transaction(OQ_STORE, "readonly").objectStore(OQ_STORE).getAll();
+rq.onsuccess = function () { res(rq.result || []); };
+rq.onerror = function () { rej(rq.error); };
+});
+}).then(function (items) {
+oqItems = items.sort(function (a, b) { return a.createdAt - b.createdAt; });
+oqReady = true; renderQueueBar();
+}).catch(function () { oqReady = true; renderQueueBar(); });
+}
+function oqPersist(item) {
+return oqOpen().then(function (db) {
+return new Promise(function (res) {
+var tx = db.transaction(OQ_STORE, "readwrite");
+tx.objectStore(OQ_STORE).put(item);
+tx.oncomplete = function () { res(); };
+tx.onerror = function () { res(); };
+});
+}).catch(function () {});
+}
+function oqAdd(item) {
+item.qid = "q" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+item.createdAt = Date.now();
+item.status = "pending";
+oqItems.push(item);
+oqShowSynced = false;
+renderQueueBar();
+return oqPersist(item);
+}
+function oqRemove(qid) {
+oqItems = oqItems.filter(function (x) { return x.qid !== qid; });
+renderQueueBar();
+return oqOpen().then(function (db) {
+return new Promise(function (res) {
+var tx = db.transaction(OQ_STORE, "readwrite");
+tx.objectStore(OQ_STORE).delete(qid);
+tx.oncomplete = function () { res(); };
+tx.onerror = function () { res(); };
+});
+}).catch(function () {});
+}
+function oqPending() { return oqItems.filter(function (x) { return x.status !== "conflict"; }); }
+function oqConflicts() { return oqItems.filter(function (x) { return x.status === "conflict"; }); }
+function renderQueueBar() {
+var bar = $("#queueBar"); if (!bar) return;
+var pend = oqPending(), conf = oqConflicts();
+var qb = $("#queueBadge"), qbt = $("#queueBadgeText");
+if (qb && qbt) {
+if (conf.length) { qb.hidden = false; qb.className = "sync-badge err"; qbt.textContent = "离线冲突 " + conf.length + " 条"; }
+else if (pend.length) { qb.hidden = false; qb.className = "sync-badge"; qbt.textContent = "待上传 " + pend.length + " 条"; }
+else qb.hidden = true;
+}
+if (!pend.length && !conf.length) {
+if (oqShowSynced) {
+bar.hidden = false; bar.className = "queue-bar ok";
+bar.innerHTML = "<span><b>已同步</b>：离线登记的内容已全部上传到共享数据。</span>";
+} else bar.hidden = true;
+return;
+}
+bar.hidden = false;
+bar.className = "queue-bar" + (conf.length? " conflict": "");
+var h = "";
+if (pend.length) h += "<span><b>待上传 " + pend.length + " 条</b>：没网时登记的内容已存本机，连上网会自动上传。</span>" + (conf.length? "": '<button class="btn" type="button" data-oq-flush="1">立即上传</button>');
+if (conf.length) {
+h += "<span><b>冲突 " + conf.length + " 条</b>：下面这些离线修改，上传时发现记录已被别人改过，没有覆盖对方，按共享数据里的新版本为准。</span>";
+conf.forEach(function (it) {
+h += '<div class="queue-conf-item"><span>' + esc(it.label || "离线修改") + " · " + esc(fmtRectTime(new Date(it.createdAt).getFullYear() + "-" + pad2(new Date(it.createdAt).getMonth() + 1) + "-" + pad2(new Date(it.createdAt).getDate()) + " " + pad2(new Date(it.createdAt).getHours()) + ":" + pad2(new Date(it.createdAt).getMinutes()))) + '</span><button class="btn" type="button" data-oq-dismiss="' + esc(it.qid) + '">知道了，丢弃这条</button></div>';
+});
+}
+bar.innerHTML = h;
+}
+function oqReplaceLocal(issueId, row) {
+if (!row) return;
+var ni = fromDb(row);
+for (var i = 0; i < ISSUES.length; i++) if (ISSUES[i].id === issueId) ISSUES[i] = ni;
+}
+function oqExecute(item) {
+if (item.kind === "create") {
+return sbInsert(item.payload).then(function (row) {
+var c = fromDb(row);
+var replaced = false;
+ISSUES = ISSUES.map(function (x) { if (x.id === item.tempId) { replaced = true; return c; } return x; });
+if (!replaced) ISSUES.push(c);
+lastSync = nowTime(); offlineMode = false; setSync("ok");
+var media = item.media || [];
+if (media.length) {
+var files = media.map(function (m) { return m.file; });
+return uploadMedia(c.id, media[0].stage || "report", media[0].by || item.payload.reporter || "", files).then(function () { return "done"; }, function () { return "done"; });
+}
+return "done";
+}).catch(function () { return "retry"; });
+}
+if (item.kind === "patch") {
+return sbPatchStatus(item.issueId, item.patch, item.guard).then(function (row) {
+oqReplaceLocal(item.issueId, row);
+lastSync = nowTime(); offlineMode = false; setSync("ok");
+return "done";
+}).catch(function (e) { return isConflict(e)? "conflict": "retry"; });
+}
+if (item.kind === "pin") {
+return sbPatchPin(item.issueId, item.lat, item.lng, item.note, item.guardNote).then(function (row) {
+oqReplaceLocal(item.issueId, row);
+lastSync = nowTime(); offlineMode = false; setSync("ok");
+return "done";
+}).catch(function (e) { return isConflict(e)? "conflict": "retry"; });
+}
+if (item.kind === "reassign") {
+return sbPatchReassign(item.issueId, item.f, item.guard).then(function (row) {
+oqReplaceLocal(item.issueId, row);
+lastSync = nowTime(); offlineMode = false; setSync("ok");
+return "done";
+}).catch(function (e) { return isConflict(e)? "conflict": "retry"; });
+}
+return Promise.resolve("done");
+}
+function oqFlush() {
+if (oqProcessing || syncing || !sbConfigured()) { renderQueueBar(); return; }
+var pend = oqPending();
+if (!pend.length) { renderQueueBar(); return; }
+if (typeof navigator !== "undefined" && navigator.onLine === false) { renderQueueBar(); return; }
+oqProcessing = true;
+var item = pend[0];
+oqExecute(item).then(function (result) {
+oqProcessing = false;
+if (result === "done") {
+oqRemove(item.qid).then(function () {
+if (!oqPending().length && !oqConflicts().length) oqShowSynced = true;
+renderAll();
+oqFlush();
+});
+return;
+}
+if (result === "conflict") {
+item.status = "conflict"; item.conflictAt = Date.now();
+oqPersist(item).then(function () {
+renderQueueBar();
+toast("有一条离线修改和别人刚改过的内容冲突了，已标出来，没有覆盖");
+oqFlush();
+});
+return;
+}
+renderQueueBar(); /* retry：还是没网，留在队列里等下一次触发 */
+});
+}
 /* 首次拉取失败才走这里：用内置 6 条快照兜底渲染，并挂「离线数据」横幅，让人一眼看出不是最新数据 */
 function firstLoadFallback() {
 if (dataReady) return;
@@ -1044,6 +1242,7 @@ ISSUES = vis; dataReady = true; renderAll();
 if (announce) toast("数据已更新 · " + lastSync);
 }
 loadMediaCounts();
+oqFlush(); /* 拉取成功说明线路通了：顺手把离线队列里待上传的逐条传上去 */
 settle();
 }, function () {
 offlineMode = true; setSync("err"); if (!dataReady) firstLoadFallback();
@@ -1282,7 +1481,8 @@ f.note = (it.note? it.note + "｜": "") + "状态变更：" + String(op || "未�
 }
 function localWarn() {
 applyStatusLocal(it, f); if (f.note != null) it.note = f.note; offlineMode = true; setSync("err"); renderAll();
-toast("未连上共享库，状态已先在本机改为「" + to + "」（未同步，联网后以共享数据为准）");
+if (sbConfigured() && typeof guard !== "undefined" && guard) oqAdd({ kind: "patch", issueId: id, patch: JSON.parse(JSON.stringify(f)), guard: { note: guard.note || "", status: guard.status || "" }, label: "状态变更：#" + id + " 改为「" + to + "」" });
+toast("没连上网，状态已存本机待上传，有网会自动上传");
 }
 if (!sbConfigured()) { localWarn(); return Promise.resolve();}
 syncing = true; setSync("busy");
@@ -1306,7 +1506,7 @@ localWarn();
    但问题详情卡里不再单独显示这一行（用户 2026-11-14 要求删掉）。 */
 function remarkOf(it) {
 var parts = String((it && it.note) || "").split("｜").map(function (s) { return s.trim(); }).filter(function (s) {
-return s && !/^整改记录：/.test(s) && !/^处理记录：/.test(s) && !/^复查记录：/.test(s) && !/^复查备注：/.test(s) && !/^重新打开：/.test(s) && !/^问题更正：/.test(s) && !/^上报记录：/.test(s) && !/^图钉修改：/.test(s) && !/^状态变更：/.test(s) && !/^留证上传：/.test(s) && !/^归位(确认|修改)：/.test(s) && !/^图钉GPS[:：]/.test(s);
+return s && !/^整改记录：/.test(s) && !/^处理记录：/.test(s) && !/^现场处理记录：/.test(s) && !/^复查记录：/.test(s) && !/^复查备注：/.test(s) && !/^重新打开：/.test(s) && !/^问题更正：/.test(s) && !/^上报记录：/.test(s) && !/^图钉修改：/.test(s) && !/^状态变更：/.test(s) && !/^留证上传：/.test(s) && !/^归位(确认|修改)：/.test(s) && !/^图钉GPS[:：]/.test(s);
 });
 return parts.join("｜");
 }
@@ -1333,6 +1533,15 @@ if (m) recs.push({ by: m[1], time: m[2], method: m[3], result: m[4], detail: m[5
 });
 return recs;
 }
+function parseOnsiteRecords(note) {
+var recs = [];
+String(note || "").split("｜").forEach(function (seg) {
+var m = seg.match(/^现场处理记录：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)[：:]([\s\S]*)$/);
+if (m) recs.push({ by: m[1], time: m[2], detail: m[3] });
+});
+return recs;
+}
+function onsiteRecordsFor(it) { return parseOnsiteRecords(it.note); }
 function parseReviewRecords(note) {
 var recs = [];
 String(note || "").split("｜").forEach(function (seg) {
@@ -1360,6 +1569,11 @@ if (it.reviewer || it.review) return [{ by: it.reviewer || "", time: it.done || 
 return [];
 }
 function rectSummary(it) {
+var onsite = onsiteRecordsFor(it);
+if (onsite.length) {
+var orc = onsite[onsite.length - 1];
+return "现场处理 " + (orc.by || "未记名") + " · " + fmtRectTime(orc.time) + " · 已处理直接闭环" + (orc.detail? " · " + orc.detail: "");
+}
 var recs = groomRecordsFor(it);
 if (recs.length) {
 var r = recs[recs.length - 1];
@@ -1371,6 +1585,7 @@ var o = old[old.length - 1];
 return (o.by || "未记名") + " · " + fmtRectTime(o.time) + " · " + (o.result || "") + (o.detail? " · " + o.detail: "");
 }
 function reviewSummary(it) {
+if (onsiteRecordsFor(it).length) return "现场直接闭环，无需复查";
 var recs = reviewRecordsFor(it);
 if (!recs.length) return "尚未复查";
 var r = recs[recs.length - 1];
@@ -1392,6 +1607,12 @@ return m? fmtDate(m[1]) + (m[2]? " " + m[2]: ""): String(t);
 }
 function rectLineHtml(it) {
 var html = "";
+var onsite = onsiteRecordsFor(it);
+if (onsite.length) {
+html += '<div class="rect-rec">' + onsite.map(function (r) {
+return '<div class="rr-line">现场处理（直接闭环）：<b>' + esc(r.by || "未记名") + "</b> · " + esc(fmtRectTime(r.time)) + ' · <span class="rr-ok">已处理</span>' + (r.detail? " · 现场怎么处理的：" + esc(r.detail): "") + " · 处理人即上报人，不进压雪车清单</div>";
+}).join("") + "</div>";
+}
 var grows = groomRecordsFor(it);
 var olds = parseRectRecords(it.note);
 if (grows.length) {
@@ -1409,9 +1630,11 @@ return '<div class="rr-line">整改（旧记录）：<b>' + esc(r.by || "未记�
 (r.detail? " · 具体情况：" + esc(r.detail): "") + "</div>";
 }).join("") + "</div>";
 }
-if (!grows.length && !olds.length) html += '<div class="rect-rec">压雪车处理：尚未登记（由压雪车填处理人、时间、处理方式和处理情况）</div>';
-var revs = reviewRecordsFor(it);
-if (revs.length && (parseReviewRecords(it.note).length || it.reviewer)) {
+if (!onsite.length && !grows.length && !olds.length) html += '<div class="rect-rec">压雪车处理：尚未登记（由压雪车填处理人、时间、处理方式和处理情况）</div>';
+var revs = onsite.length? []: reviewRecordsFor(it);
+if (onsite.length) {
+html += '<div class="rect-rec">复查：现场处理直接闭环，无需复查</div>';
+} else if (revs.length && (parseReviewRecords(it.note).length || it.reviewer)) {
 html += '<div class="rect-rec">' + revs.map(function (r) {
 return '<div class="rr-line">复查：<b>' + esc(r.by || "未记名") + "</b> · " + esc(fmtRectTime(r.time)) +
 ' · <span class="' + (r.result === "合格"? "rr-ok": "rr-no") + '">' + esc(r.result || "") + "</span>" +
@@ -1438,7 +1661,8 @@ return html;
 function patchIssueRecord(id, f, applyLocal, okMsg) {
 function localWarn() {
 applyLocal(); offlineMode = true; setSync("err"); renderAll();
-toast("未连上共享库，记录已先记在本机（未同步，联网后以共享数据为准）");
+if (sbConfigured() && typeof guard !== "undefined" && guard) oqAdd({ kind: "patch", issueId: id, patch: JSON.parse(JSON.stringify(f)), guard: { note: guard.note || "", status: guard.status || "" }, label: (okMsg || "修改记录") + "（#" + id + "）" });
+toast("没连上网，这条修改已存本机待上传，有网会自动上传");
 }
 if (!sbConfigured()) { localWarn(); return Promise.resolve(); }
 syncing = true; setSync("busy");
@@ -1532,7 +1756,8 @@ if (reps.length) reps.forEach(function (r) { evs.push({ label: "上报", by: r.b
 else evs.push({ label: "上报", by: it.reporter || "", time: (it.date || "") + (it.time? " " + String(it.time).slice(0, 5): ""), text: "上报问题，状态「待分派」" + (it.pinLat != null? "，落图钉 " + fmtPin(it): ""), isMod: false });
 String(it.note || "").split("｜").forEach(function (seg) {
 var m;
-if ((m = seg.match(/^处理记录：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)\s+方式(.+?)\s+结果(已处理|未完成)：([\s\S]*)$/))) evs.push({ label: "压雪车处理登记", by: m[1], time: m[2], text: "处理方式：" + m[3] + "，结果：" + m[4] + (m[5]? "，" + m[5]: ""), isMod: true });
+if ((m = seg.match(/^现场处理记录：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)[：:]([\s\S]*)$/))) evs.push({ label: "现场处理·直接闭环", by: m[1], time: m[2], text: m[3], isMod: true });
+else if ((m = seg.match(/^处理记录：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)\s+方式(.+?)\s+结果(已处理|未完成)：([\s\S]*)$/))) evs.push({ label: "压雪车处理登记", by: m[1], time: m[2], text: "处理方式：" + m[3] + "，结果：" + m[4] + (m[5]? "，" + m[5]: ""), isMod: true });
 else if ((m = seg.match(/^复查记录：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)\s+结论(合格|不合格|未完成)：([\s\S]*)$/))) evs.push({ label: "复查登记", by: m[1], time: m[2], text: "结论：" + m[3] + (m[4]? "，" + m[4]: ""), isMod: true });
 else if ((m = seg.match(/^整改记录：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)\s+结果(合格|未完成)：([\s\S]*)$/))) evs.push({ label: "整改登记（旧）", by: m[1], time: m[2], text: "结果：" + m[3] + (m[4]? "，" + m[4]: ""), isMod: true });
 else if ((m = seg.match(/^重新打开：(\S+)\s+(\d{4}-\d{2}-\d{2}(?:\s\d{2}:\d{2})?)[：:]([\s\S]*)$/))) evs.push({ label: "重新打开", by: m[1], time: m[2], text: m[3], isMod: true });
@@ -1554,15 +1779,16 @@ return '<div class="rr-line">' + esc(e.label) + "：<b>" + esc(e.by || "未记�
 /* 兼容旧调用名 */
 function submitRectification(id, data) { return submitGrooming(id, { by: data.by, datetime: data.datetime, method: "其他方式（见处理情况）", result: data.result === "合格"? "已处理": "未完成", detail: data.detail }); }
 
-/* 新增上报：先写库；写不进去就先记本机内存并明确提示未同步 */
-function submitIssue(rec) {
-function localAdd() {
-var maxId = 0; ISSUES.forEach(function (x) { if (x.id > maxId) maxId = x.id;});
-var c = JSON.parse(JSON.stringify(rec)); c.id = maxId + 1; ISSUES.push(c); renderAll(); return c;
+/* 新增上报：先写库；写不进去（没网）就整条存进离线队列（连照片文件一起），
+   本机先用负数临时 id 显示并标「待上传」，有网自动上传后换成真实记录 */
+function submitIssue(rec, mediaFiles) {
+function localAddWithId(id) {
+var c = JSON.parse(JSON.stringify(rec)); c.id = id; ISSUES.push(c); renderAll(); return c;
 }
 if (!sbConfigured()) {
 offlineMode = true; setSync("err");
-var c0 = localAdd();
+var maxId0 = 0; ISSUES.forEach(function (x) { if (x.id > maxId0) maxId0 = x.id;});
+var c0 = localAddWithId(maxId0 + 1);
 toast("未配置共享库，这条已先记在本机（未同步）");
 return Promise.resolve(c0);
 }
@@ -1571,12 +1797,16 @@ return sbInsert(rec).then(function (row) {
 syncing = false;
 var c = fromDb(row); ISSUES.push(c);
 lastSync = nowTime(); offlineMode = false; setSync("ok"); renderAll();
-toast("已上报并同步，所有打开页面的人都能看到");
+toast(rec.status === "已闭环"? "已直接闭环并同步：绿钉显示，不进待办和压雪车清单": "已上报并同步，所有打开页面的人都能看到");
 return c;
 }).catch(function () {
 syncing = false; offlineMode = true; setSync("err");
-var c = localAdd();
-toast("未连上共享库，这条已先记在本机（未同步，联网后以共享数据为准）");
+var tempId = -Date.now();
+var c = localAddWithId(tempId);
+c._offline = true;
+var media = (mediaFiles || []).map(function (f) { return { file: f, stage: "report", by: rec.reporter || "" }; });
+oqAdd({ kind: "create", label: "新上报：" + (rec.desc || ""), payload: JSON.parse(JSON.stringify(rec)), tempId: tempId, media: media });
+toast("没连上网，这条已存本机待上传，有网会自动上传");
 return c;
 });
 }
@@ -1611,14 +1841,16 @@ var cleanBy = String(by || "").replace(/\s+/g, "") || it.reporter || "未记名"
 var pinSeg = "图钉修改：" + cleanBy + " " + todayStr() + " " + nowHHMM() + "：" +
 (it.pinLat != null && it.pinLng != null? "图钉位置由 " + fmtPin(it) + " 改为 " + lat.toFixed(6) + ", " + lng.toFixed(6): "落图钉 " + lat.toFixed(6) + ", " + lng.toFixed(6));
 var newNote = noteWithPin(it.note, lat, lng) + "｜" + pinSeg;
+var origNote = it.note || "";
 function applyLocal() { it.pinLat = lat; it.pinLng = lng; it.note = newNote;}
 function localWarn() {
 applyLocal(); offlineMode = true; setSync("err"); renderAll();
-toast("未连上共享库，图钉已先记在本机（未同步，联网后以共享数据为准）");
+if (sbConfigured()) oqAdd({ kind: "pin", issueId: id, lat: lat, lng: lng, note: newNote, guardNote: origNote, label: "改图钉位置：#" + id });
+toast("没连上网，图钉已存本机待上传，有网会自动上传");
 }
 if (!sbConfigured()) { localWarn(); return Promise.resolve();}
 syncing = true; setSync("busy");
-return sbPatchPin(id, lat, lng, newNote, it.note || "").then(function (row) {
+return sbPatchPin(id, lat, lng, newNote, origNote).then(function (row) {
 syncing = false;
 if (row) { var ni = fromDb(row); for (var i = 0; i < ISSUES.length; i++) if (ISSUES[i].id === id) ISSUES[i] = ni;}
 else applyLocal();
@@ -1760,9 +1992,10 @@ var f = { trail: DB_TRAIL_NAME[newTrail] || (TRAILS[newTrail]? TRAILS[newTrail].
 function applyLocal() { it.trail = newTrail; it.seg = newSeg; it.note = newNote;}
 function localWarn() {
 applyLocal(); offlineMode = true; setSync("err");
+if (typeof guard !== "undefined" && guard) oqAdd({ kind: "reassign", issueId: id, f: JSON.parse(JSON.stringify(f)), guard: { note: guard.note || "", status: guard.status || "" }, label: "归位：#" + id + " 归到「" + posName + "」" });
 state.trail = newTrail; state.seg = newSeg; state.openTrails[newTrail] = true;
 renderAll();
-toast("未连上共享库，已先在本机归到「" + posName + "」（未同步，联网后以共享数据为准）");
+toast("没连上网，已存本机待上传，有网会自动上传");
 }
 if (!sbConfigured()) { localWarn(); return Promise.resolve();}
 syncing = true; setSync("busy");
@@ -1804,7 +2037,7 @@ function statusClass(s) { return s === "已闭环"? "closed": s === "整改中"?
    颜色按状态与等级：已闭环绿色，未闭环Ⅰ级红色、Ⅱ/Ⅲ级黄色（等级缺失或无法识别按黄色）；
    默认选「今日」（白天报新问题用）；早上查昨晚压雪情况点「昨日」，看昨天的问题和复查状态。
    落钉强制：上报必须落钉才能提交；已有记录也能在详情里补落 / 改位置。 */
-var gpsMap = null, gpsPinLayer = null, gpsDraftMarker = null, gpsMeMarker = null, gpsHiMarker = null;
+var gpsMap = null, gpsPinLayer = null, gpsDraftMarker = null, gpsMeMarker = null, gpsMeCircle = null, gpsHiMarker = null;
 var gpsPinMarkers = {};
 var draftPin = null; /* 上报表单待提交的图钉 {lat,lng} */
 var pinArm = null; /* 落钉模式：{kind:"draft"} 或 {kind:"issue", id} */
@@ -1832,9 +2065,9 @@ var sv = $("#pinArmSave"); if (sv) sv.hidden = true;
 function updateMoveArmText() {
 var t = $("#pinArmText"); if (!t) return;
 if (pendingMovePin) {
-t.innerHTML = "<b>改图钉位置：</b>" + esc(pinArmLabel || "") + " —— 新位置已点在 <b>" + pendingMovePin.lat.toFixed(6) + ", " + pendingMovePin.lng.toFixed(6) + "</b>，不对可以拖动蓝色图钉微调、或在地图上重新点一下；位置对了点「保存新位置」，改动会按你留的名字记进修改历史";
+t.innerHTML = "<b>改图钉位置：</b>" + esc(pinArmLabel || "") + " —— 新位置已点在 <b>" + pendingMovePin.lat.toFixed(6) + ", " + pendingMovePin.lng.toFixed(6) + "</b>，不对可以拖动蓝色图钉微调、或在地图上重新点一下；位置对了点「确认并保存新位置」，改动会按你留的名字记进修改历史";
 } else {
-t.innerHTML = "<b>改图钉位置：</b>" + esc(pinArmLabel || "") + " —— 在地图上点一下你想放的位置，图钉就落在你点的地方，不会自动取 GPS 定位（改位置时你可能已经不在现场了）；落下后可以拖动微调，确认后点「保存新位置」";
+t.innerHTML = "<b>改图钉位置：</b>" + esc(pinArmLabel || "") + " —— 在地图上点一下你想放的位置，图钉就落在你点的地方，不会自动取 GPS 定位（改位置时你可能已经不在现场了）；落下后可以拖动微调，确认后点「确认并保存新位置」";
 }
 }
 function placeMovePin(latlng) {
@@ -1860,10 +2093,12 @@ if (arm) {
 clearMovePin();
 if (arm.kind === "issue") {
 updateMoveArmText();
-} else {
-$("#pinArmText").innerHTML = "<b>落图钉：</b>" + esc(label || "") + " —— 在地图上点一下，图钉会自动落在你现在的位置（GPS），不按手指点的位置落；「定位我」只定位看位置，不落钉";
-}
 bar.hidden = false;
+} else {
+/* 新上报落钉不显示提示条（已按要求删掉）：落钉状态照常进入，
+   落下临时钉后确认 / 重选都在地图上的浮动条里操作 */
+bar.hidden = true;
+}
 var el = $("#gpsMap"); if (el) el.scrollIntoView({ block: "center", behavior: "smooth"});
 /* 改位置：先把地图移到现有图钉处，方便对照着点新位置；没有旧钉就保持当前视图 */
 if (arm.kind === "issue" && gpsMap) {
@@ -1878,41 +2113,70 @@ bar.hidden = true;
 }
 }
 function updateLocateStatus() {
-var el = $("#locateStatus");
+/* 「确认这个位置」「重新选位置」按钮在地图上的浮动条里（pinMapBar），
+   状态文字也显示在那条上；表单里只剩「到地图上落图钉」一个按钮。 */
+var bar = $("#pinMapBar"), el = $("#pinMapStatus");
+var cBtn = $("#confirmPinBtn"), rBtn = $("#redoPinBtn"), aBtn = $("#armPinBtn");
+if (cBtn) cBtn.hidden = !(draftPin && !draftPin.confirmed);
+if (rBtn) rBtn.hidden = !(draftPin && draftPin.confirmed);
+if (aBtn) aBtn.hidden = !!(draftPin && draftPin.confirmed);
+if (bar) bar.hidden = !draftPin;
 if (!el) return;
-if (draftPin) {
-el.innerHTML = "已落图钉：<b>" + draftPin.lat.toFixed(6) + ", " + draftPin.lng.toFixed(6) + "</b>（在地图上拖动蓝色图钉可微调）";
-el.hidden = false;
+if (draftPin && draftPin.confirmed) {
+el.innerHTML = "图钉已确认锁定：<b>" + draftPin.lat.toFixed(6) + ", " + draftPin.lng.toFixed(6) + "</b>";
+} else if (draftPin) {
+el.innerHTML = "临时图钉：<b>" + draftPin.lat.toFixed(6) + ", " + draftPin.lng.toFixed(6) + "</b> —— 可拖动微调、点别处重落";
 } else {
 el.textContent = "";
-el.hidden = true;
 }
 }
 function placeDraftPin(latlng) {
-draftPin = { lat: latlng.lat, lng: latlng.lng};
+if (draftPin && draftPin.confirmed) return; /* 已确认锁定的钉，点地图不再移动，要改先点「重新选位置」 */
+draftPin = { lat: latlng.lat, lng: latlng.lng, confirmed: false };
 if (gpsMap) {
 if (!gpsDraftMarker) {
 gpsDraftMarker = L.marker(latlng, { draggable: true, icon: gpinIcon("draft"), zIndexOffset: 1000}).addTo(gpsMap);
 gpsDraftMarker.on("dragend", function () {
+if (draftPin && draftPin.confirmed) return;
 var ll = gpsDraftMarker.getLatLng();
-draftPin = { lat: ll.lat, lng: ll.lng};
+draftPin = { lat: ll.lat, lng: ll.lng, confirmed: false };
 updateLocateStatus();
 });
 } else gpsDraftMarker.setLatLng(latlng);
 }
 updateLocateStatus();
 }
+function confirmDraftPin() {
+if (!draftPin || draftPin.confirmed) return;
+draftPin.confirmed = true;
+if (gpsDraftMarker) {
+gpsDraftMarker.setIcon(gpinIcon("confirmed"));
+if (gpsDraftMarker.dragging) gpsDraftMarker.dragging.disable();
+}
+setPinArm(null);
+updateLocateStatus();
+toast("图钉位置已确认锁定，可以提交上报了");
+var lb = $("#locateBox"); if (lb) lb.scrollIntoView({ block: "center", behavior: "smooth"});
+}
+function redoDraftPin() {
+if (!draftPin) return;
+draftPin.confirmed = false;
+if (gpsDraftMarker) {
+gpsDraftMarker.setIcon(gpinIcon("draft"));
+if (gpsDraftMarker.dragging) gpsDraftMarker.dragging.enable();
+}
+updateLocateStatus();
+setPinArm({ kind: "draft" }, "新上报问题");
+toast("已解锁：拖动图钉、或在地图上点别处重新落，改好再点「确认这个位置」");
+}
 function clearDraftPin() {
 draftPin = null;
 if (gpsDraftMarker && gpsMap) { gpsMap.removeLayer(gpsDraftMarker); gpsDraftMarker = null;}
 updateLocateStatus();
 }
-/* 上报表单按钮直接落钉：点一下就实时取 GPS，把草稿钉落在当前位置并跳到地图上看，
-   不用再进入落钉状态去地图上另点。取不到定位就不落钉，可再点一次重试；
-   落下后照样能拖动蓝色图钉微调。 */
-var gpsPinBusy = false;
-function dropDraftPinAtGps() {
-/* 顺序要求：先填完上报人姓名才能落钉，防止误碰；没填就提示并跳回姓名框 */
+/* 落钉入口：只进入「手动落钉」状态并把人带到地图，绝不取 GPS 自动落钉。
+   GPS 只在「定位我」里用（移地图、显示蓝点）。顺序要求：先填上报人姓名才能落钉。 */
+function armDraftPin() {
 var reporterEl = $("#fReporter");
 if (!reporterEl || !reporterEl.value.trim()) {
 toast("请先填上报人姓名，再落钉");
@@ -1922,33 +2186,9 @@ setTimeout(function () { try { reporterEl.focus({ preventScroll: true });} catch
 }
 return;
 }
-if (gpsPinBusy) return;
-if (!navigator.geolocation) { toast("这台设备 / 浏览器不支持定位，没法按当前位置落钉"); return;}
-gpsPinBusy = true;
-var btn = $("#armPinBtn");
-if (btn) { btn.disabled = true; btn.textContent = "正在定位…";}
-if (gpsMap) { var mel = $("#gpsMap"); if (mel) mel.scrollIntoView({ block: "center", behavior: "smooth"});}
-toast("正在定位，图钉会落在你现在的位置…");
-function done() {
-gpsPinBusy = false;
-if (btn) { btn.disabled = false; btn.textContent = "按我现在的位置落图钉";}
-}
-navigator.geolocation.getCurrentPosition(function (pos) {
-done();
-var lat = pos.coords.latitude, lng = pos.coords.longitude;
-var acc = Math.round(pos.coords.accuracy || 0);
-setPinArm(null);
-placeDraftPin({ lat: lat, lng: lng });
-if (gpsMap) {
-gpsMap.setView([lat, lng], Math.max(gpsMap.getZoom(), 16));
-if (gpsMeMarker) gpsMap.removeLayer(gpsMeMarker);
-gpsMeMarker = L.marker([lat, lng], { icon: L.divIcon({ className: "", html: '<span class="me-dot"></span>', iconSize: [21, 21], iconAnchor: [10, 10] }), zIndexOffset: 900 }).addTo(gpsMap);
-}
-toast("图钉已按你现在的位置落在地图上，误差约 " + acc + " 米，位置不准可以拖动图钉微调");
-}, function () {
-done();
-toast("没拿到定位：请确认已允许定位权限、手机定位已打开，再点一次按钮落钉");
-}, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+if (draftPin && draftPin.confirmed) { toast("图钉已确认锁定，要改位置点「重新选位置」"); return;}
+setPinArm({ kind: "draft" }, "新上报问题");
+toast("在地图上点一下问题所在的位置落钉；没确认前可以随便拖动、点别处重落");
 }
 function initGpsMap() {
 var fb = $("#gpsFallback");
@@ -1963,11 +2203,18 @@ var mOk = $("#gpsMap"); if (mOk) mOk.hidden = false;
 if (fb) fb.hidden = true;
 gpsMap = L.map("gpsMap", { attributionControl: true });
 gpsMap.attributionControl.setPrefix(false);
-/* 底图用简洁浅色，不用卫星影像。原 CARTO basemaps 瓦片现已改为需要 API key：
-   接口会返回印着「API KEY REQUIRED」的占位图（HTTP 仍是 200），背景就全是这行字。
-   现换成免密钥的 OpenStreetMap 标准瓦片，再经 .gps-base-tiles 柔和滤镜压淡、偏绿，
-   配合容器底色 #d4edcf，保持与实测图一致的浅绿底呈现。 */
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, subdomains: "abc", attribution: "© OpenStreetMap contributors", className: "gps-base-tiles" }).addTo(gpsMap);
+/* 底图用简洁浅色，不用卫星影像。底图瓦片已改为自托管：北大湖一带
+   （经度 126.560–126.675、纬度 43.383–43.441）11–16 级瓦片，由
+   OpenStreetMap 数据（Geofabrik 吉林省数据包）离线渲染生成，随页面放在
+   assets/tiles/{z}/{x}/{y}.png，页面打开时一张瓦片都不再请求任何地图
+   服务器——不会再被 OSM 的用量政策封（之前远程调 tile.openstreetmap.org
+   被返回整屏「Access blocked」占位图；实测从机房批量抓 OSM 官方瓦片同样
+   会触发封禁，故改为拿 OSM 原始数据自己渲染），国内和山上弱网、甚至没网
+   时底图照样显示。坐标仍是 WGS-84，与雪道面、图钉完全对齐，不需要任何
+   坐标转换。16 级以上放大显示 16 级瓦片（maxNativeZoom），图钉坐标是
+   矢量数据、不受影响，落钉精度不变。范围外不加载瓦片，只剩容器底色
+   #d4edcf 与雪道面，errorTileUrl 用透明占位图兜底防裂图。 */
+L.tileLayer("assets/tiles/{z}/{x}/{y}.png", { minZoom: 11, maxZoom: 19, maxNativeZoom: 16, bounds: L.latLngBounds([43.383, 126.560], [43.441, 126.675]), errorTileUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAABFUlEQVR4nO3BMQEAAADCoPVP7WsIoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeAMBPAABPO1TCQAAAABJRU5ErkJggg==", attribution: "© OpenStreetMap contributors", className: "gps-base-tiles" }).addTo(gpsMap);
 /* 图层叠放顺序与颜色照实测图 space 原样：雪道面深蓝、各批雪道图层各自固定色、
    T 索一带橄榄色，一律不随巡查状态变色；索道只作淡淡参照：细虚线、低透明度。 */
 var toLL = function (ring) { return ring.map(function (pt) { return [pt[1], pt[0]];}); };
@@ -1994,41 +2241,24 @@ L.polyline(toLL(line), { color: "#7c8b96", weight: 1.1, opacity: 0.5, dashArray:
 gpsPinLayer = L.layerGroup().addTo(gpsMap);
 if (bounds) gpsMap.fitBounds(bounds, { padding: [12, 12]});
 gpsMap.on("click", function (e) {
-/* 点地图落钉分两种：改已有记录的位置（issue）是手动点图——钉就落在手指点
-   的地方，不取 GPS（改的人可能已经离开现场），落下后可拖动微调，点
-   「保存新位置」才写入并留档；新上报走表单上的「按我现在的位置落图钉」
-   按钮取 GPS，这条 draft 路径保持 GPS 落钉不变。
-   没有落钉任务时点地图什么都不发生。 */
-if (!pinArm) return;
-var arm = pinArm;
-if (arm.kind === "issue") { placeMovePin(e.latlng); return; }
-/* 顺序要求同样管地图落钉：新上报没填上报人姓名，点地图也不落钉（落钉状态保留，填完可再点） */
-if (arm.kind === "draft") {
+/* 点地图落钉一律手动，钉就落在手指点的地方，绝不取 GPS 自动落钉：
+   ① 改已有记录的位置（issue）：落在点的地方，可拖动微调，点「确认并保存新位置」才写入；
+   ② 新上报落钉状态（draft）：落下一枚临时钉，没确认前点别处就重落到别处；
+   ③ 不在落钉状态、但已有未确认的临时钉时，点地图同样是把临时钉挪过去；
+   ④ 临时钉已确认锁定、或没有任何落钉任务时，点地图什么都不发生（防误触）。 */
+if (pinArm && pinArm.kind === "issue") { placeMovePin(e.latlng); return; }
+if (pinArm && pinArm.kind === "draft") {
 var rf = $("#fReporter");
 if (!rf || !rf.value.trim()) {
 toast("请先填上报人姓名，再落钉");
 if (rf) rf.scrollIntoView({ block: "center", behavior: "smooth"});
 return;
 }
+placeDraftPin(e.latlng);
+toast("临时图钉已落下：可以拖动微调、点别处重落，位置对了点地图上的「确认这个位置」");
+return;
 }
-if (!navigator.geolocation) { toast("这台设备 / 浏览器不支持定位，没法按当前位置落钉"); return;}
-toast("正在定位，图钉会落在你现在的位置…");
-navigator.geolocation.getCurrentPosition(function (pos) {
-if (!pinArm || pinArm !== arm) return;
-var lat = pos.coords.latitude, lng = pos.coords.longitude;
-var acc = Math.round(pos.coords.accuracy || 0);
-setPinArm(null);
-gpsMap.setView([lat, lng], Math.max(gpsMap.getZoom(), 16));
-if (gpsMeMarker) gpsMap.removeLayer(gpsMeMarker);
-gpsMeMarker = L.marker([lat, lng], { icon: L.divIcon({ className: "", html: '<span class="me-dot"></span>', iconSize: [21, 21], iconAnchor: [10, 10] }), zIndexOffset: 900 }).addTo(gpsMap);
-if (arm.kind === "draft") {
-placeDraftPin({ lat: lat, lng: lng });
-toast("图钉已按你现在的位置落下，误差约 " + acc + " 米，位置不准可以拖动图钉微调");
-var lb = $("#locateBox"); if (lb) setTimeout(function () { lb.scrollIntoView({ block: "center", behavior: "smooth"});}, 350);
-}
-}, function () {
-toast("没拿到定位：请确认已允许定位权限、手机定位已打开，再点一次地图落钉");
-}, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+if (!pinArm && draftPin && !draftPin.confirmed) { placeDraftPin(e.latlng); return; }
 });
 } catch (err) {
 gpsMap = null;
@@ -2100,15 +2330,20 @@ var lat = pos.coords.latitude, lng = pos.coords.longitude;
 var acc = Math.round(pos.coords.accuracy || 0);
 gpsMap.setView([lat, lng], Math.max(gpsMap.getZoom(), 16));
 if (gpsMeMarker) gpsMap.removeLayer(gpsMeMarker);
+if (gpsMeCircle) gpsMap.removeLayer(gpsMeCircle);
 gpsMeMarker = L.marker([lat, lng], { icon: L.divIcon({ className: "", html: '<span class="me-dot"></span>', iconSize: [21, 21], iconAnchor: [10, 10] }), zIndexOffset: 900 }).addTo(gpsMap);
+/* 蓝点周围画误差圈：你真实位置就在这个圈里。圈越大说明这次定位越不准
+   （山上信号弱时手机会回落到基站定位，误差能到几百米），落钉别照着蓝点抄，
+   要照着底图和雪道面手动点。 */
+if (acc > 0) gpsMeCircle = L.circle([lat, lng], { radius: acc, color: "#2f7fe0", weight: 1.2, opacity: 0.65, fillColor: "#2f7fe0", fillOpacity: 0.13, interactive: false }).addTo(gpsMap);
 /* 「定位我」是纯定位功能：任何场景下都只把地图移到自己的位置、显示蓝点
    表示人在哪，绝不落钉、不生成草稿钉，也不打断正在进行的落钉任务
-   （pinArm 保持不变）；新上报落钉走表单按钮取 GPS，改已有记录的位置
-   则在落钉状态下手动点地图落钉、不取 GPS。 */
-toast("已定位到你现在的位置，误差约 " + acc + " 米");
+   （pinArm 保持不变）；落钉一律手动点地图，临时钉确认后才锁定。 */
+if (acc > 50) toast("已定位，误差约 " + acc + " 米（蓝圈范围）——误差偏大，落钉请照底图手动点，别照蓝点");
+else toast("已定位到你现在的位置，误差约 " + acc + " 米（蓝圈范围）");
 }, function () {
 toast("没拿到定位：请确认已允许定位权限、手机定位已打开");
-}, { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 });
+}, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
 }
 
 function renderChips() {
@@ -2295,9 +2530,9 @@ list.forEach(function (it) {
 h += '<div class="issue">' + (it.trail === "pending"? suggestBoxHtml(it): "") + '<div class="i-top"><span>' + fmtDateTime(it) + " · 上报人 " + (it.reporter? esc(it.reporter): "未记录（历史台账）") + '</span>' +
 '<span class="pill type">' + esc(it.type) + '</span><span class="pill lvl">' + esc(it.level) + '</span>' +
 (it.needGroom? '<span class="pill groom">需夜间压雪</span>': "") +
-'<span class="pill ' + statusClass(it.status) + '">' + esc(it.status) + '</span>' + mediaMarkHtml(it) + '</div>' +
+'<span class="pill ' + statusClass(it.status) + '">' + esc(it.status) + '</span>' + (onsiteRecordsFor(it).length? '<span class="pill closed">现场直接闭环</span>': "") + mediaMarkHtml(it) + '</div>' +
 '<div class="desc">' + esc(it.desc) + '</div>' +
-'<div class="act"><b>处置（' + esc(it.team || "待分派") + (it.owner? " " + esc(it.owner): "") + "）：</b>" + esc(it.action || "待定") + "</div>" +
+(onsiteRecordsFor(it).length? '<div class="act"><b>现场处理（' + esc(it.reporter || it.owner || "上报人") + "）：</b>" + esc(it.action || onsiteRecordsFor(it)[onsiteRecordsFor(it).length - 1].detail || "已处理") + "</div>": '<div class="act"><b>处置（' + esc(it.team || "待分派") + (it.owner? " " + esc(it.owner): "") + "）：</b>" + esc(it.action || "待定") + "</div>") +
 (it.pinLat != null?
 '<div class="pin-line">图钉定位：<b>' + esc(fmtPin(it)) + '</b>（真实 GPS 坐标）<button type="button" class="linkbtn" data-pin-view="' + it.id + '">在 GPS 图上看</button>' + (it.status !== "已闭环"? '<button type="button" class="linkbtn" data-pin-move="' + it.id + '">改位置</button>': "") + '</div>'
 : (it.status !== "已闭环"? '<div class="pin-line">未落图钉<button type="button" class="linkbtn" data-pin-move="' + it.id + '">去地图上点位置落图钉</button></div>': "")) +
@@ -2703,37 +2938,49 @@ copyText(lines.join("\n"), "今晚作业单已复制，去微信群粘贴发给�
 });
 
 var lastNew = null;
-$("#addBtn").addEventListener("click", function () {
+function handleSubmit(mode) {
+var isClosed = mode === "closed";
 var reporter = $("#fReporter").value.trim();
 if (!reporter) { toast("先填上报人姓名"); $("#fReporter").focus(); return;}
 var reportMediaEl = $("#fMedia");
 var reportMediaFiles = reportMediaEl && reportMediaEl.files? Array.prototype.slice.call(reportMediaEl.files): [];
 var desc = $("#fTalk").value.trim();
 if (!desc) { toast("再用一句话说清问题：什么问题、在哪、建议怎么处理"); $("#fTalk").focus(); return;}
+/* 现场已处理不再另写处理说明：一句话描述说清即可，点「现场已处理」直接闭环 */
+var onsiteClean = "";
 if (!draftPin) { toast("请先落定位图钉再提交"); var lbPin = $("#locateBox"); if (lbPin) lbPin.scrollIntoView({ block: "center", behavior: "smooth"}); return;}
+if (!draftPin.confirmed) { toast("图钉还没确认锁定：先点地图上的「确认这个位置」，确认后才能提交"); var gmEl = $("#gpsMap"); if (gmEl) gmEl.scrollIntoView({ block: "center", behavior: "smooth"}); return;}
 var p = lastParse || parseDescription(desc);
 var trail = $("#fTrail").value, seg = $("#fSeg").value;
 if (!manualLocked) { trail = p.trail; seg = p.seg;}
-/* 新雪道 / 新段位：提交前先在本页建档，提交后随记录同步给所有人 */
 if (p.trailNew || p.trailPending) registerTrail(p.trail, p.trailPending? "待归位雪道": p.trailName);
 if (p.segNew) registerSeg(trail, p.segName);
 var ftime = $("#fTime").value;
 if (!ftime) { ftime = nowHHMM(); $("#fTime").value = ftime;}
-var btn = $("#addBtn"); btn.disabled = true; btn.textContent = "正在同步…";
+var btn = isClosed? $("#addClosedBtn"): $("#addBtn");
+var btn2 = isClosed? $("#addBtn"): $("#addClosedBtn");
+var origHtml = btn? btn.innerHTML: "";
+if (btn) { btn.disabled = true; btn.textContent = "正在同步…"; }
+if (btn2) btn2.disabled = true;
+var today = todayStr();
 var rec = {
-date: todayStr(), time: ftime, trail: trail, seg: seg,
+date: today, time: ftime, trail: trail, seg: seg,
 desc: desc, type: $("#fType").value, level: ($("#fLevelTop") && $("#fLevelTop").value) || $("#fLevel").value,
-affects: p.level === "Ⅰ级"? "是": "否", status: "待分派",
-done: "", review: "", reviewer: "",
-team: $("#fTeam").value, owner: $("#fOwner").value.trim(),
-action: $("#fAction").value.trim() || p.action || "待分派处置",
-needGroom: $("#fGroom").value === "yes",
+affects: p.level === "Ⅰ级"? "是": "否", status: isClosed? "已闭环": "待分派",
+done: isClosed? today: "", review: isClosed? "合格": "", reviewer: isClosed? reporter: "",
+team: $("#fTeam").value, owner: isClosed? reporter: $("#fOwner").value.trim(),
+action: isClosed? "已现场处理": ($("#fAction").value.trim() || p.action || "待分派处置"),
+needGroom: isClosed? false: $("#fGroom").value === "yes",
 reporter: reporter,
 pinLat: draftPin? draftPin.lat: null, pinLng: draftPin? draftPin.lng: null
 };
+if (isClosed) {
+rec.note = "责任：" + rec.team + " " + rec.reporter + "，" + rec.action + "｜来源：一句话上报（" + rec.reporter + "） " + rec.date + " " + rec.time + "｜上报记录：" + rec.reporter + " " + rec.date + " " + rec.time + "：现场已处理直接闭环，状态「已闭环」｜现场处理记录：" + rec.reporter + " " + rec.date + " " + rec.time + "：" + onsiteClean + "｜状态变更：" + rec.reporter + " " + rec.date + " " + rec.time + "：状态由「待分派」改为「已闭环」";
+} else {
 rec.note = "责任：" + rec.team + (rec.owner? " " + rec.owner: "") + "，" + rec.action + "｜来源：一句话上报（" + rec.reporter + "） " + rec.date + " " + rec.time + "｜上报记录：" + rec.reporter + " " + rec.date + " " + rec.time + "：新建上报，状态「待分派」";
+}
 if (draftPin) rec.note = noteWithPin(rec.note, draftPin.lat, draftPin.lng);
-submitIssue(rec).then(function (created) {
+submitIssue(rec, reportMediaFiles).then(function (created) {
 lastNew = created;
 state.date = todayStr(); state.trail = created.trail; state.seg = created.seg; state.openTrails[created.trail] = true;
 if (typeof voiceStop === "function" && typeof voiceOn !== "undefined" && voiceOn) voiceStop(true);
@@ -2743,20 +2990,25 @@ clearDraftPin();
 manualLocked = false;
 $("#fTime").value = nowHHMM();
 renderAll();
-/* 记录先写好再传留证：传不上不影响这条上报，只提示去详情里补传；上传人直接用上报人姓名 */
-if (reportMediaFiles.length) {
+if (reportMediaFiles.length && !created._offline) {
 if (sbConfigured() && !offlineMode) uploadMedia(created.id, "report", reporter, reportMediaFiles);
 else toast("照片没传上，可以在详情里补传");
 }
 }).catch(function () {}).then(function () {
-btn.disabled = false; btn.textContent = "提交上报（同步到所有人）";
+if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
+if (btn2) btn2.disabled = false;
 });
-});
+}
+$("#addBtn").addEventListener("click", function () { handleSubmit("pending"); });
+var closedBtnEl = $("#addClosedBtn");
+if (closedBtnEl) closedBtnEl.addEventListener("click", function () { handleSubmit("closed"); });
 $("#fTalk").addEventListener("input", renderParsePreview);
-/* ===== GPS 图钉：落钉 / 定位我（图钉必填，不提供删除图钉入口；落错靠拖动调整） ===== */
+/* ===== GPS 图钉：手动落钉 + 确认锁定 / 定位我（图钉必填，不提供删除图钉入口；落错靠拖动调整） ===== */
 $("#armPinBtn").addEventListener("click", function () {
-dropDraftPinAtGps();
+armDraftPin();
 });
+$("#confirmPinBtn").addEventListener("click", function () { confirmDraftPin();});
+$("#redoPinBtn").addEventListener("click", function () { redoDraftPin();});
 $("#pinArmCancel").addEventListener("click", function () { setPinArm(null);});
 $("#pinArmSave").addEventListener("click", function () {
 if (!pendingMovePin) { toast("先在地图上点一下你想放的位置"); return; }
@@ -2888,6 +3140,19 @@ renderAll();
 refresh(false);
 setupRealtime();
 loadMediaCounts();
+/* 离线队列接线：打开页面先把本机队列读出来显示待上传条数；一有网（online 事件）
+   或每 30 秒巡检到有待上传且在线，就自动逐条上传；队列条上的「立即上传」和
+   冲突条的「丢弃」走事件委托（队列条内容是动态渲染的） */
+oqLoad().then(function () { oqFlush(); });
+window.addEventListener("online", function () { refresh(false); oqFlush(); });
+window.addEventListener("offline", function () { renderQueueBar(); });
+setInterval(function () { if (!document.hidden && oqPending().length) oqFlush(); }, 30000);
+document.addEventListener("click", function (e) {
+var fl = e.target && e.target.closest? e.target.closest("[data-oq-flush]"): null;
+if (fl) { refresh(false); oqFlush(); return; }
+var dis = e.target && e.target.closest? e.target.closest("[data-oq-dismiss]"): null;
+if (dis) { oqRemove(dis.getAttribute("data-oq-dismiss")); }
+});
 $("#lightbox").addEventListener("click", function () { this.hidden = true; var li = $("#lightboxImg"); if (li) li.removeAttribute("src");});
 </script>
 </body>
